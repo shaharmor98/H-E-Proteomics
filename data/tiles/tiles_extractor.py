@@ -58,7 +58,7 @@ class TilesExtractor(object):
                     patch.save(image_name)
 
         print("Extracted: ", slide_name)
-        
+
     @staticmethod
     def check_img_is_blank(img):
         im = np.array(img)
