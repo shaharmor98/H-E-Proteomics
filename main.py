@@ -1,10 +1,13 @@
 import argparse
 
 import pytorch_lightning as pl
+from lightning_lite import seed_everything
 from pytorch_lightning.callbacks import EarlyStopping
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
+from cross_validation.kfold_loop import KFoldLoop
+from cross_validation.tiles_kfold_data_module import TilesKFoldDataModule
 from data.tiles.tiles_dataset import TilesDataset
 from data.tiles.tiles_labeler import TilesLabeler
 from data_parser.rnr_to_metadata_parser import RNrToMetadata
@@ -22,9 +25,6 @@ def init_argparse():
     parser.add_argument("-i", "--inference", action="store_true")
     return parser
 
-
-# figure out how to transfer GCP bucket into GCP VM.
-# launch
 
 def preprocess(args):
     print("Given slides dir: ", args.slides_directory)
@@ -58,14 +58,20 @@ def train(args):
     test_dataset = TilesDataset(tiles_directory_path, transform_compose, tiles_labeler, test_ids)
 
     model = PAM50Classifier(device).to(device)
+    datamodule = TilesKFoldDataModule()
     trainer = pl.Trainer(max_epochs=2, devices="auto", accelerator="auto",
+                         num_sanity_val_steps=0,
                          callbacks=[EarlyStopping(monitor="val_loss", mode="min")],
                          default_root_dir="checkpoints")
+    internal_fit_loop = trainer.fit_loop
+    trainer.fit_loop = KFoldLoop(5, export_path="./")
+    trainer.fit_loop.connect(internal_fit_loop)
+    trainer.fit(model, datamodule)
 
-    train_loader = DataLoader(train_dataset, batch_size=16, num_workers=2)
-    val_loader = DataLoader(val_dataset, batch_size=16, num_workers=2)
-
-    trainer.fit(model, train_loader, val_loader)
+    # train_loader = DataLoader(train_dataset, batch_size=16, num_workers=2)
+    # val_loader = DataLoader(val_dataset, batch_size=16, num_workers=2)
+    #
+    # trainer.fit(model, train_loader, val_loader)
 
     # test the model
     trainer.test(model, dataloaders=DataLoader(test_dataset))
@@ -82,6 +88,7 @@ def main():
     if args.preprocess:
         preprocess(args)
     elif args.train:
+        seed_everything(HostConfiguration.SEED)
         train(args)
     elif args.inference:
         inference()
@@ -89,3 +96,9 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+"""
+TODO- walk through cross validation package and example and then test it.
+Create gpu machine as Alona instructed
+Check ensemble voting class- determine accuracy
+"""
