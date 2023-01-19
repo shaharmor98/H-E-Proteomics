@@ -26,6 +26,7 @@ def init_argparse():
 # launch
 
 def preprocess(args):
+    print("Given slides dir: ", args.slides_directory)
     preprocessor = Preprocessor(args.slides_directory)
     preprocessor.start()
 

@@ -1,0 +1,14 @@
+# Note! it is important to install torch according the official guidelines
+torch
+
+pytorch_lightning
+torchvision
+torchmetrics
+numpy
+pandas
+scikit-learn
+
+# Note! start by running the following commands:
+# sudo apt-get install openslide-tools
+# sudo apt-get install python-openslide
+openslide-python

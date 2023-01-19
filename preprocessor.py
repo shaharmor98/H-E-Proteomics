@@ -22,7 +22,7 @@ class Preprocessor(object):
 
         print("Slides_path: ", slides_path)
         exit(1)
-        
+
         with Pool(HostConfiguration.CPU_CORES_NUM) as p:
             p.map(self._tiles_extractor.extract, slides_path)
 
@@ -33,6 +33,7 @@ class Preprocessor(object):
 
     def _get_slides_path(self):
         paths = []
+        print("Iterating slides directory: ", self._slides_directory)
 
         for file_name in os.listdir(self._slides_directory):
             file_path = pathlib.Path(file_name)
@@ -40,5 +41,6 @@ class Preprocessor(object):
                 continue
 
             paths.append(str(file_path.absolute()))
+            print("file path: ", file_path.absolute())
 
         return paths
