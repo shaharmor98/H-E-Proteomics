@@ -1,3 +1,4 @@
+import glob
 import os
 import pathlib
 from multiprocessing import Pool
@@ -35,12 +36,11 @@ class Preprocessor(object):
         paths = []
         print("Iterating slides directory: ", self._slides_directory)
 
-        for file_name in os.listdir(self._slides_directory):
-            file_path = pathlib.Path(file_name)
-            if file_path.suffix == "" or file_path.suffix != self.SLIDES_FORMAT_NAME:
+        for file_path in glob.glob(os.path.join(self._slides_directory, "*")):
+            file_suffix = os.path.splitext(file_path)
+            if file_suffix == "" or file_suffix != self.SLIDES_FORMAT_NAME:
                 continue
 
-            paths.append(str(file_path.absolute()))
-            print("file path: ", file_path.absolute())
+            paths.append(file_path)
 
         return paths
