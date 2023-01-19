@@ -37,7 +37,7 @@ class Preprocessor(object):
         print("Iterating slides directory: ", self._slides_directory)
 
         for file_path in glob.glob(os.path.join(self._slides_directory, "*")):
-            file_suffix = os.path.splitext(file_path)
+            file_suffix = os.path.splitext(file_path)[1]
             if file_suffix == "" or file_suffix != self.SLIDES_FORMAT_NAME:
                 continue
 
