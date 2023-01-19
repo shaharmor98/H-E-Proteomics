@@ -4,15 +4,12 @@ import numpy as np
 import openslide
 from PIL import Image
 
-from logger import Logger
-
 
 class TilesExtractor(object):
     def __init__(self, zoom, patch_size, tiles_directory):
         self._zoom = zoom
         self._patch_size = patch_size
         self._tiles_directory = tiles_directory
-        self._logger = Logger()
 
     def extract(self, slide_path):
         slide_name = os.path.basename(slide_path)
@@ -60,8 +57,8 @@ class TilesExtractor(object):
                     image_name = '{}/{}_{}_{}.jpeg'.format(self._tiles_directory, slide_name, x // pw, y // pw)
                     patch.save(image_name)
 
-        self._logger.info("Tiles extraction done")
-
+        print("Extracted: ", slide_name)
+        
     @staticmethod
     def check_img_is_blank(img):
         im = np.array(img)
