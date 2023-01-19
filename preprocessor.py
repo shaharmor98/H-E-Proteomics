@@ -1,6 +1,7 @@
 import os
-from multiprocessing import Pool
 import pathlib
+from multiprocessing import Pool
+
 from data.tiles.tiles_extractor import TilesExtractor
 from host_configuration import HostConfiguration
 
@@ -19,6 +20,9 @@ class Preprocessor(object):
     def start(self):
         slides_path = self._get_slides_path()
 
+        print("Slides_path: ", slides_path)
+        exit(1)
+        
         with Pool(HostConfiguration.CPU_CORES_NUM) as p:
             p.map(self._tiles_extractor.extract, slides_path)
 

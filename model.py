@@ -3,9 +3,7 @@ import torch
 import torch.optim as optim
 import torchmetrics
 import torchvision.models as models
-from sklearn.metrics import accuracy_score
 from torch import nn
-from torchmetrics import ConfusionMatrix
 from torchvision.models import InceptionOutputs
 
 
