@@ -44,6 +44,7 @@ class RNrToMetadata(object):
     def create_pam50_random_train_test_ids(self, random_seed=42, test_size=0.1):
         tnbc = self.get_tnbc_unique_df()
 
+        print("Found " + str(len(tnbc)) + " unique TNBC records")
         # different PAM50 subtypes are not equally distributed, so we will manually ensure
         # equal representation of each of PAM 50 subtype class.
 

@@ -1,3 +1,4 @@
+import datetime
 import os
 
 import numpy as np
@@ -32,7 +33,7 @@ class TilesExtractor(object):
             print('{}: exception caught, message: {}'.format(slide_path, str(e)))
             return
 
-        print(slide_path, width, height)
+        print("Start extracting: {} , time: {}".format(slide_name, datetime.datetime.now()))
         for x in range(1, width, pw):
             for y in range(1, height, pw):
                 if x + pw > width:
@@ -56,8 +57,9 @@ class TilesExtractor(object):
                 if not is_blank:
                     image_name = '{}/{}_{}_{}.jpeg'.format(self._tiles_directory, slide_name, x // pw, y // pw)
                     patch.save(image_name)
+                    print("Saved: ", '{}/{}_{}_{}.jpeg'.format(self._tiles_directory, slide_name, x // pw, y // pw))
 
-        print("Extracted: ", slide_name)
+        print("Extracted: {} , time: {}".format(slide_name, datetime.datetime.now()))
 
     @staticmethod
     def check_img_is_blank(img):

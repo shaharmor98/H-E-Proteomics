@@ -18,6 +18,7 @@ def init_argparse():
     parser.add_argument("-p", "--preprocess", action="store_true")
     parser.add_argument("--slides_directory", type=str)
     parser.add_argument("-t", "--train", action="store_true")
+    parser.add_argument("-device", type=str)
     parser.add_argument("-i", "--inference", action="store_true")
     return parser
 
@@ -31,8 +32,10 @@ def preprocess(args):
     preprocessor.start()
 
 
-def train():
-    device = "cpu"
+def train(args):
+    device = args.device
+    if device is None:
+        print("Device must be provided")
 
     rnr_to_metadata = RNrToMetadata(excel_path=HostConfiguration.RNR_METADATA_FILE_PATH)
     tiles_labeler = TilesLabeler(rnr_to_metadata)
@@ -55,8 +58,7 @@ def train():
     test_dataset = TilesDataset(tiles_directory_path, transform_compose, tiles_labeler, test_ids)
 
     model = PAM50Classifier(device).to(device)
-    # devices="auto", accelerator="auto"
-    trainer = pl.Trainer(max_epochs=2,
+    trainer = pl.Trainer(max_epochs=2, devices="auto", accelerator="auto",
                          callbacks=[EarlyStopping(monitor="val_loss", mode="min")],
                          default_root_dir="checkpoints")
 
@@ -80,7 +82,7 @@ def main():
     if args.preprocess:
         preprocess(args)
     elif args.train:
-        train()
+        train(args)
     elif args.inference:
         inference()
 

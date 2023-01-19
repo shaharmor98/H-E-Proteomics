@@ -15,8 +15,9 @@ class Preprocessor(object):
         self._zoom = zoom
         self._patch_size = patch_size
         self._setup()
+        tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=self._zoom, patch_size=self._patch_size)
         self._tiles_extractor = TilesExtractor(zoom=zoom, patch_size=patch_size,
-                                               tiles_directory=HostConfiguration.TILES_DIRECTORY)
+                                               tiles_directory=tiles_directory)
 
     def start(self):
         slides_path = self._get_slides_path()
