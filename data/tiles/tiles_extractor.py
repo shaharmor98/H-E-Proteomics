@@ -57,7 +57,6 @@ class TilesExtractor(object):
                 if not is_blank:
                     image_name = '{}/{}_{}_{}.jpeg'.format(self._tiles_directory, slide_name, x // pw, y // pw)
                     patch.save(image_name)
-                    print("Saved: ", '{}/{}_{}_{}.jpeg'.format(self._tiles_directory, slide_name, x // pw, y // pw))
 
         print("Extracted: {} , time: {}".format(slide_name, datetime.datetime.now()))
 
