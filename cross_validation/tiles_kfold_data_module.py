@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
-from sklearn.model_selection import KFold
-from torch.utils.data import DataLoader
-from torch.utils.data.dataset import Subset
 
 from pytorch_lightning import LightningDataModule
+from sklearn.model_selection import KFold
+from torch.utils.data import DataLoader
 
 from data.tiles.tiles_dataset import TilesDataset
 
@@ -49,6 +48,7 @@ class TilesKFoldDataModule(BaseKFoldDataModule):
 
     def setup_fold_index(self, fold_index):
         train_indices, val_indices = self.splits[fold_index]
+        train_indices, val_indices = self._translate_indices(train_indices, val_indices)
         print("setup fold index: ", fold_index)
         print("setup fold index: {} found {} train indices".format(fold_index, len(train_indices)))
         print("Example 10 indices: {} ".format(train_indices[0:10]))
@@ -66,3 +66,16 @@ class TilesKFoldDataModule(BaseKFoldDataModule):
 
     def __post_init__(cls):
         super().__init__()
+
+    def _translate_indices(self, train_indices, val_indices):
+        # KFold split by index, thus we will translate back to SCANB_PD_ID indices
+        translated_train_indices = []
+        translated_val_indices = []
+
+        for t in train_indices:
+            translated_train_indices.append(self.train_indices[t])
+
+        for t in val_indices:
+            translated_val_indices.append(self.train_indices[t])
+
+        return translated_train_indices, translated_val_indices
