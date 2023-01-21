@@ -11,11 +11,13 @@ from cross_validation.tiles_kfold_data_module import BaseKFoldDataModule
 
 
 class KFoldLoop(Loop):
-    def __init__(self, num_folds, export_path):
+    def __init__(self, num_folds, export_path, num_of_classes, device):
         super().__init__()
         self.num_folds = num_folds
         self.current_fold = 0
         self.export_path = export_path
+        self.num_of_classes = num_of_classes
+        self.device = device
 
     @property
     def done(self) -> bool:
@@ -66,7 +68,8 @@ class KFoldLoop(Loop):
     def on_run_end(self) -> None:
         """Used to compute the performance of the ensemble model on the test set."""
         checkpoint_paths = [osp.join(self.export_path, f"model.{f_idx + 1}.pt") for f_idx in range(self.num_folds)]
-        voting_model = EnsembleVotingModel(type(self.trainer.lightning_module), checkpoint_paths)
+        voting_model = EnsembleVotingModel(type(self.trainer.lightning_module), checkpoint_paths, self.num_of_classes,
+                                           self.device)
         voting_model.trainer = self.trainer
         # This requires to connect the new model and move it the right device.
         self.trainer.strategy.connect(voting_model)

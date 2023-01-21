@@ -1,8 +1,6 @@
 import numpy as np
-from pytorch_lightning import LightningModule
 import torch
-
-from torch.nn import functional as F
+from pytorch_lightning import LightningModule
 from torchmetrics.classification.accuracy import Accuracy
 
 
@@ -35,7 +33,7 @@ class EnsembleVotingModel(LightningModule):
         # find the most frequent value in each column, that is, the majority vote of the models
         majority_predictions = np.apply_along_axis(lambda x: np.bincount(x).argmax(), axis=0, arr=predictions)
 
-        test_acc = torch.sum(predictions == original_labels).float() / len(y)
+        test_acc = torch.sum(majority_predictions == original_labels).float() / len(y)
 
-        self.log('test_acc', test_acc, prog_bar=True)
-        self.log("test_loss", test_loss)
+        self.log('test_ensemble_acc', test_acc, prog_bar=True)
+        self.log("test_ensemble_loss", test_loss)

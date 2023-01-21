@@ -15,7 +15,7 @@ from data.tiles.tiles_dataset import TilesDataset
 from data.tiles.tiles_labeler import TilesLabeler
 from data_parser.rnr_to_metadata_parser import RNrToMetadata
 from host_configuration import HostConfiguration
-from model import PAM50Classifier
+from pam50_classifier import PAM50Classifier
 from preprocessor import Preprocessor
 
 
@@ -77,14 +77,11 @@ def train(args):
                          default_root_dir=HostConfiguration.CHECKPOINTS_PATH)
     internal_fit_loop = trainer.fit_loop
 
-    # Should be 10 to enforce 90% train and 10% valid! talk with alona about it
-    trainer.fit_loop = KFoldLoop(5, export_path=HostConfiguration.CHECKPOINTS_PATH)
+    trainer.fit_loop = KFoldLoop(5, export_path=HostConfiguration.CHECKPOINTS_PATH,
+                                 num_of_classes=PAM50Classifier.NUM_OF_OUT_CLASSES, device=device)
     trainer.fit_loop.connect(internal_fit_loop)
     trainer.fit(model, datamodule)
 
-    # train_loader = DataLoader(train_dataset, batch_size=16, num_workers=2)
-    # val_loader = DataLoader(val_dataset, batch_size=16, num_workers=2)
-    #
     # trainer.fit(model, train_loader, val_loader)
 
     # test the model
