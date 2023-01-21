@@ -2,10 +2,14 @@ import argparse
 import multiprocessing
 import os.path
 
+import numpy as np
 import pytorch_lightning as pl
+import torch
+from PIL import Image
 from lightning_lite import seed_everything
 from pytorch_lightning.callbacks import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
+from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
@@ -93,8 +97,45 @@ def prepare_train_env():
         os.makedirs(HostConfiguration.CHECKPOINTS_PATH)
 
 
-def inference():
-    raise NotImplementedError("This feature is not implemented")
+def inference(args):
+    model = PAM50Classifier.load_from_checkpoint(args.model_path)
+    softmax = nn.Softmax(dim=1)
+
+    tiles_directory = args.tiles_dir
+    ids = []
+    for i in ids:
+        print("Starting ", i)
+        img_tiles = [t for t in os.listdir(tiles_directory) if t.startswith(i)]
+        print("Found {} tiles".format(len(img_tiles)))
+        if len(img_tiles) == 0:
+            continue
+        tensors = []
+        transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
+                                                transforms.ToTensor(),
+                                                transforms.Normalize(mean=[0.], std=[255.])])
+
+        for t in img_tiles:
+            img = Image.open(os.path.join(tiles_directory, t))
+            img = transform_compose(img)
+            tensors.append(img)
+
+        tensors = torch.stack(tensors, dim=0)
+        splits = torch.tensor_split(tensors, len(tensors) // 50)
+        partial_voted = []
+        for split in splits:
+            # batch = torch.stack(split, dim=0)
+            out = model(split)
+            out = softmax(out).detach().numpy()
+
+            confidence_threshold = 0.75
+            mask = out > confidence_threshold
+            indexes = np.where(mask.any(axis=1), np.argmax(mask, axis=1), -1)
+            tiles_values = indexes[np.where(indexes != -1)[0]]
+            most_voted_tile = np.argmax(np.bincount(tiles_values.astype(int)))
+            partial_voted.append(most_voted_tile)
+        most_voted_tile = np.asarray(partial_voted)
+        most_voted_tile = np.argmax(np.bincount(most_voted_tile.astype(int)))
+        print("Id: {} got: {}".format(i, most_voted_tile))
 
 
 def main():
@@ -108,7 +149,8 @@ def main():
         prepare_train_env()
         train(args)
     elif args.inference:
-        inference()
+        # inference()
+        pass
 
 
 if __name__ == '__main__':
