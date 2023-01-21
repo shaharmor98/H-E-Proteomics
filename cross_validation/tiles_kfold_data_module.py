@@ -42,10 +42,16 @@ class TilesKFoldDataModule(BaseKFoldDataModule):
 
     def setup_folds(self, num_folds):
         self.num_folds = num_folds
+        print("Setup folds")
+        print("There are {} train indices".format(len(self.train_indices)))
+        print("Example 10 indices: {} ".format(self.train_indices[0:10]))
         self.splits = [split for split in KFold(num_folds).split(range(len(self.train_indices)))]
 
     def setup_fold_index(self, fold_index):
         train_indices, val_indices = self.splits[fold_index]
+        print("setup fold index: ", fold_index)
+        print("setup fold index: {} found {} train indices".format(fold_index, len(train_indices)))
+        print("Example 10 indices: {} ".format(train_indices[0:10]))
         self.train_fold = TilesDataset(self.tiles_directory, self.transform, self.tiles_labeler, train_indices)
         self.val_fold = TilesDataset(self.tiles_directory, self.transform, self.tiles_labeler, val_indices)
 
