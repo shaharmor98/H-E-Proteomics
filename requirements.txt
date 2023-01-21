@@ -3,7 +3,6 @@ torch
 
 pytorch_lightning
 torchvision
-torchmetrics
 numpy
 pandas
 scikit-learn
