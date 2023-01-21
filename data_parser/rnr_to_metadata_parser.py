@@ -39,6 +39,9 @@ class RNrToMetadata(object):
             raise RuntimeError("Duplicated columns found, abort")
 
         tnbc = tnbc.dropna(subset=['PAM50 subtype'])  # Drop rows with missing PAM50
+
+        # PAM50 subtype slides aren't equally distributed, so we will stick with the 3 top subtypes
+        tnbc = tnbc.drop(tnbc.loc[tnbc['PAM50 subtype'].isin(["Luminal A", "Luminal B"])].index)
         return tnbc
 
     def create_pam50_random_train_test_ids(self, random_seed=42, test_size=0.1):

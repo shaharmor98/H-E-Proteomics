@@ -8,7 +8,7 @@ from torchvision.models import InceptionOutputs
 
 
 class PAM50Classifier(pl.LightningModule):
-    NUM_OF_OUT_CLASSES = 5
+    NUM_OF_OUT_CLASSES = 3
 
     def __init__(self, device):
         super().__init__()
