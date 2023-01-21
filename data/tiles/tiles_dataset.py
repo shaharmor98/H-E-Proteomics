@@ -17,10 +17,11 @@ class TilesDataset(Dataset):
         self.transform = transform
         self.tiles_labeler = tiles_labeler
         self._files = self._load_files(ids)
+        print("Loading: {} files".format(len(self._files)))
 
     def _load_files(self, ids):
         files = os.listdir(self.root_dir)
-        filtered_files = list(filter(lambda x: any(x.startswith(prefix) for prefix in ids), files))
+        filtered_files = list(filter(lambda x: any(x.startswith(str(prefix)) for prefix in ids), files))
         return filtered_files
 
     def __len__(self):

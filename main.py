@@ -49,7 +49,7 @@ def train(args):
     wandb_logger = WandbLogger(project="proteomics-project")
     num_of_workers = multiprocessing.cpu_count() / 2
 
-    print("Is going to use: {} workers", num_of_workers)
+    print("Is going to use: {} workers".format(num_of_workers))
 
     rnr_to_metadata = RNrToMetadata(excel_path=HostConfiguration.RNR_METADATA_FILE_PATH)
     tiles_labeler = TilesLabeler(rnr_to_metadata)

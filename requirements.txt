@@ -6,6 +6,9 @@ torchvision
 numpy
 pandas
 scikit-learn
+lightning_lite
+wandb
+openpyxl
 
 # Note! start by running the following commands:
 # sudo apt-get install openslide-tools
