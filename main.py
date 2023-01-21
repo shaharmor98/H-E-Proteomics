@@ -47,7 +47,7 @@ def train(args):
         tiles_directory_path = args.tiles_dir
 
     wandb_logger = WandbLogger(project="proteomics-project")
-    num_of_workers = multiprocessing.cpu_count() / 2
+    num_of_workers = int(multiprocessing.cpu_count() / 2)
 
     print("Is going to use: {} workers".format(num_of_workers))
 
