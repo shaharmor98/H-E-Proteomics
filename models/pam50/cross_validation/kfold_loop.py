@@ -7,7 +7,7 @@ from pytorch_lightning.loops.loop import Loop
 from pytorch_lightning.trainer.states import TrainerFn
 
 from models.pam50.cross_validation.ensemble_voting_model import EnsembleVotingModel
-from cross_validation.tiles_kfold_data_module import BaseKFoldDataModule
+from models.pam50.cross_validation.tiles_kfold_data_module import BaseKFoldDataModule
 
 
 class KFoldLoop(Loop):
