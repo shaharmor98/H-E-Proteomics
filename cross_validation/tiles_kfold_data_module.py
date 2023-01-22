@@ -39,6 +39,7 @@ class TilesKFoldDataModule(BaseKFoldDataModule):
         self.train_indices, self.test_indices = \
             self.rnr_to_metadata.create_pam50_random_train_test_ids(test_size=self.test_proportion_size,
                                                                     tiles_directory=self.tiles_directory)
+        print("Those are kfold test indices: ", self.test_indices)
 
     def setup_folds(self, num_folds):
         self.num_folds = num_folds
