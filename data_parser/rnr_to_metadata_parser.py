@@ -1,3 +1,4 @@
+import os
 import random
 
 import pandas as pd
@@ -41,13 +42,24 @@ class RNrToMetadata(object):
         tnbc = tnbc.dropna(subset=['PAM50 subtype'])  # Drop rows with missing PAM50
 
         # PAM50 subtype slides aren't equally distributed, so we will stick with the 3 top subtypes
-        tnbc = tnbc.drop(tnbc.loc[tnbc['PAM50 subtype'].isin(["Luminal A", "Luminal B"])].index)
+        tnbc = tnbc.drop(tnbc.loc[tnbc['PAM50 subtype'].isin(["Luminal A", "Luminal B", "Normal-like"])].index)
         return tnbc
 
-    def create_pam50_random_train_test_ids(self, random_seed=42, test_size=0.1):
+    def create_pam50_random_train_test_ids(self, random_seed=42, test_size=0.1, tiles_directory=None):
         tnbc = self.get_tnbc_unique_df()
 
-        print("Found " + str(len(tnbc)) + " unique TNBC records")
+        # we want to filter out IDs with no matching slide
+        if tiles_directory:
+            potential_ids = {}
+            for img in os.listdir(tiles_directory):
+                potential_ids[img[:img.find(".")]] = 1
+
+            print("Originally found: {} unique records".format(len(tnbc)))
+            tnbc = tnbc[tnbc['SCANB_PD_ID'].isin(potential_ids.keys())]
+            print("Final cohort includes: {} unique records".format(len(tnbc)))
+        else:
+            print("Found " + str(len(tnbc)) + " unique TNBC records")
+
         # different PAM50 subtypes are not equally distributed, so we will manually ensure
         # equal representation of each of PAM 50 subtype class.
 
@@ -57,19 +69,20 @@ class RNrToMetadata(object):
         train_ids = []
         test_ids = []
 
-        pam50_subtypes = list(tnbc['PAM50 subtype'].unique())  # We expect 5 different subtypes
+        pam50_subtypes = list(tnbc['PAM50 subtype'].unique())  # We expect 2 different subtypes
 
         for subtype in pam50_subtypes:
             subtype_ids = tnbc[tnbc['PAM50 subtype'] == subtype]['SCANB_PD_ID'].to_list()
             subtype_size = len(subtype_ids)
             random.shuffle(subtype_ids)
 
-            test_count = int(subtype_size * test_size)
+            test_count = int(subtype_size * test_size) + 1
             train_count = subtype_size - test_count
 
             test_ids += subtype_ids[train_count:]
             train_ids += subtype_ids[:train_count]
 
+        print("Those are test_ids: ", test_ids)
         return train_ids, test_ids
 
     def split_train(self, train_ids, random_seed=42, val_size=0.1):

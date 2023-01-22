@@ -62,10 +62,11 @@ def train(args):
                                             transforms.ToTensor(),
                                             transforms.Normalize(mean=[0.], std=[255.])])
 
-    test_proportion_size = 0.1
-    val_proportion_size = 0.1
+    test_proportion_size = 0.15
 
-    train_ids, test_ids = rnr_to_metadata.create_pam50_random_train_test_ids(test_size=test_proportion_size)
+    train_ids, test_ids = rnr_to_metadata.create_pam50_random_train_test_ids(test_size=test_proportion_size,
+                                                                             tiles_directory=tiles_directory_path)
+
     # full_train_ids = train_ids[:]
     # train_ids, val_ids = rnr_to_metadata.split_train(full_train_ids, val_size=val_proportion_size)
     # train_dataset = TilesDataset(tiles_directory_path, transform_compose, tiles_labeler, train_ids)
@@ -74,7 +75,8 @@ def train(args):
 
     model = PAM50Classifier(device).to(device)
     datamodule = TilesKFoldDataModule(tiles_directory_path, transform_compose, tiles_labeler, rnr_to_metadata,
-                                      batch_size=16, num_workers=num_of_workers, test_proportion_size=0.1)
+                                      batch_size=16, num_workers=num_of_workers,
+                                      test_proportion_size=test_proportion_size)
     trainer = pl.Trainer(max_epochs=2, devices="auto", accelerator="auto",
                          num_sanity_val_steps=0, logger=wandb_logger,
                          callbacks=[EarlyStopping(monitor="val_loss", mode="min")],
