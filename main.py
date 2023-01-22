@@ -13,8 +13,8 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from cross_validation.kfold_loop import KFoldLoop
-from cross_validation.tiles_kfold_data_module import TilesKFoldDataModule
+from models.pam50.cross_validation.kfold_loop import KFoldLoop
+from models.pam50.cross_validation.tiles_kfold_data_module import TilesKFoldDataModule
 from data.tiles.tiles_dataset import TilesDataset
 from data.tiles.tiles_labeler import TilesLabeler
 from data_parser.rnr_to_metadata_parser import RNrToMetadata
