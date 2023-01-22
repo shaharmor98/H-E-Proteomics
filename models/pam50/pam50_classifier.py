@@ -21,7 +21,13 @@ class PAM50Classifier(pl.LightningModule):
         self.save_hyperparameters()
 
     def forward(self, x):
-        x = self.model(x)
+        try:
+            x = self.model(x)
+        except Exception:
+            print("Shit")
+            print("Shape: ", x.shape)
+            x = self.model(x)
+
         if isinstance(x, torch.Tensor):
             x = self.fc(x)
         elif isinstance(x, InceptionOutputs):
@@ -72,6 +78,5 @@ class PAM50Classifier(pl.LightningModule):
         self.log("test_loss", test_loss)
 
     def configure_optimizers(self):
-        print("Using learning rate: " + str(self.learning_rate))
         optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
