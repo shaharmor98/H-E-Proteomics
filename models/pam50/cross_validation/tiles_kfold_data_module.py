@@ -48,6 +48,8 @@ class TilesKFoldDataModule(BaseKFoldDataModule):
     def setup_fold_index(self, fold_index):
         train_indices, val_indices = self.splits[fold_index]
         train_indices, val_indices = self._translate_indices(train_indices, val_indices)
+        print("found {} train indices".format(len(train_indices)))
+        print("found {} val indices".format(len(val_indices)))
         self.train_fold = TilesDataset(self.tiles_directory, self.transform, self.tiles_labeler, train_indices)
         self.val_fold = TilesDataset(self.tiles_directory, self.transform, self.tiles_labeler, val_indices)
 

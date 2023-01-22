@@ -35,6 +35,10 @@ class PAM50Classifier(pl.LightningModule):
         return x
 
     def training_step(self, batch, batch_idx):
+        if len(batch) == 1:
+            print("WTF this occurs")
+            return
+
         # training_step defines the train loop.
         # it is independent of forward
         x, original_labels = batch
