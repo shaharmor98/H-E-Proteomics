@@ -71,9 +71,9 @@ class DiaToMetadata(object):
         return tnbc
 
     def get_existing_slides_ids(self):
-        potential_ids = set()
+        potential_ids = {}
         for img in os.listdir(self.tiles_directory):
-            potential_ids.add(img[:img.find(".")])
+            potential_ids[img[:img.find(".")]] = 1
 
         return potential_ids
 
@@ -82,8 +82,10 @@ class DiaToMetadata(object):
         tnbc = self.get_tnbc_unique_df()
         print("Continuing with {} tnbc slides".format(len(tnbc)))
         ids = self.get_existing_slides_ids()
-        print("Continuing with {} existing slides".format(len(ids)))
-        rnrs = self.map_scanb_pd_id_to_rnr(ids)
+        print("Found {} existing slides".format(len(ids)))
+        tnbc = tnbc[tnbc['SCANB_PD_ID'].isin(ids.keys())]
+        print("Continuing with {} existing slides".format(len(tnbc)))
+        rnrs = self.map_scanb_pd_id_to_rnr(tnbc['SCANB_PD_ID'].to_list())
         genes = self.get_genes_with_complete_records(rnrs)
         print("Found {} complete genes, start analysing".format(len(genes)))
 
