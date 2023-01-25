@@ -33,7 +33,7 @@ class DiaToMetadata(object):
             target_column_names.append("ProteinQuant_" + rnr)
 
         condition = self._dia_df[target_column_names].notnull().all(axis=1)
-        full_genes = self._dia_df.loc[condition, [["Gene_symbol"] + target_column_names]]
+        full_genes = self._dia_df.loc[condition, ["Gene_symbol"] + target_column_names]
         full_genes = full_genes.reset_index()
         return full_genes
 
