@@ -96,3 +96,5 @@ class DiaToMetadata(object):
             normalized_row = self.get_gene_normalized_protein_quant(gene_row)
             high_cols, low_cols = self.get_upper_lower_percentage(normalized_row)
             results[gene_name] = [high_cols, low_cols]
+
+        return results
