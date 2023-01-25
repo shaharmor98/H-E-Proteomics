@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pandas as pd
 
 """
@@ -50,16 +51,17 @@ class DiaToMetadata(object):
         return gene_row
 
     def get_upper_lower_percentage(self, row):
-        high_threshold = 0.8
-        low_threshold = 0.2
+        # Change it to support percentage and not actual value!
+        high_percentile = np.percentile(row, 80)
+        low_percentile = np.percentile(row, 20)
 
-        high_cols = row.columns[row.gt(high_threshold).any()]
-        low_cols = row.columns[row.lt(low_threshold).any()]
+        high_cols = row[row >= high_percentile].dropna(axis=1).columns
+        low_cols = row[row <= low_percentile].dropna(axis=1).columns
 
         print("Found {} samples with high gene amount".format(len(high_cols)))
         print("Found {} samples with low gene amount".format(len(low_cols)))
 
-        return high_cols, low_cols
+        return high_cols, low_cols, high_percentile, low_percentile
 
     def get_tnbc_unique_df(self):
         tnbc = self._metadata_df[self._metadata_df['TNBC'] == 1]  # Focusing only on positive TNBC cases
@@ -90,13 +92,17 @@ class DiaToMetadata(object):
         print("Found {} complete genes, start analysing".format(len(genes)))
 
         results = {}
+        summary_results = {}
 
         for row_number in range(len(genes)):
             gene_row = genes.loc[genes.index == row_number]
             gene_name = gene_row['Gene_symbol'].values[0]
             print("Gene: {}".format(gene_name))
             normalized_row = self.get_gene_normalized_protein_quant(gene_row)
-            high_cols, low_cols = self.get_upper_lower_percentage(normalized_row)
+            high_cols, low_cols, high_percentile, low_percentile = self.get_upper_lower_percentage(normalized_row)
             results[gene_name] = [high_cols, low_cols]
+            summary_results[gene_name] = [high_percentile, low_percentile]
 
-        return results
+        # try to sort by those whose 20% and 80% are the most significant..
+
+        return results, summary_results
