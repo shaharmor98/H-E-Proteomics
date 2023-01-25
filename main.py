@@ -161,6 +161,3 @@ if __name__ == '__main__':
 # python 3.9 installation: https://computingforgeeks.com/how-to-install-python-latest-debian/
 # venvs guide: https://blog.eldernode.com/python-3-9-on-debian-9-and-debian-10/
 # install torch for cuda 11.0 -> pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
-
-
-# Those are test_ids:  ['PD36003a', 'PD36022a', 'PD31065a', 'PD35986a', 'PD36051a', 'PD35994a', 'PD35975a', 'PD31072a', 'PD31067a', 'PD31041a', 'PD35930a', 'PD31028a', 'PD31177a', 'PD35958a', 'PD31066a', 'PD31090a', 'PD31127a', 'PD31136a', 'PD35985a', 'PD35932a', 'PD31068a', 'PD36015a', 'PD31133a', 'PD36009a', 'PD36002a', 'PD31156a']
