@@ -34,20 +34,22 @@ class DiaToMetadata(object):
 
         condition = self._dia_df[target_column_names].notnull().all(axis=1)
         full_genes = self._dia_df.loc[condition, [["Gene_symbol"] + target_column_names]]
+        full_genes = full_genes.reset_index()
         return full_genes
 
-    def get_gene_normalized_protein_quant(self, gene_index):
-        cols = [col for col in self._dia_df.columns if col.startswith("ProteinQuant_")]
+    def get_gene_normalized_protein_quant(self, gene_row):
+        cols = [col for col in gene_row.columns if col.startswith("ProteinQuant_")]
+
         # normalized_cols = ["MinMaxNorm" + col for col in self._dia_df.columns if col.startswith("ProteinQuant_")]
-        row = self._dia_df.loc[self._dia_df.index == gene_index, cols]
+        # row = self._dia_df.loc[self._dia_df.index == gene_index, cols]
 
         def normalize(row):
             return (row - row.min()) / (row.max() - row.min())
 
-        row = row[cols].apply(normalize, axis=1)
-        return row
+        gene_row = gene_row[cols].apply(normalize, axis=1)
+        return gene_row
 
-    def print_upper_lower_percentage(self, row):
+    def get_upper_lower_percentage(self, row):
         high_threshold = 0.8
         low_threshold = 0.2
 
@@ -74,3 +76,23 @@ class DiaToMetadata(object):
             potential_ids.add(img[:img.find(".")])
 
         return potential_ids
+
+    def analyze_genes(self):
+        print("Starting with: {} rows".format(len(self._metadata_df)))
+        tnbc = self.get_tnbc_unique_df()
+        print("Continuing with {} tnbc slides".format(len(tnbc)))
+        ids = self.get_existing_slides_ids()
+        print("Continuing with {} existing slides".format(len(ids)))
+        rnrs = self.map_scanb_pd_id_to_rnr(ids)
+        genes = self.get_genes_with_complete_records(rnrs)
+        print("Found {} complete genes, start analysing".format(len(genes)))
+
+        results = {}
+
+        for row_number in range(len(genes)):
+            gene_row = genes.loc[genes.index == row_number]
+            gene_name = gene_row['Gene_symbol'].values[0]
+            print("Gene: {}".format(gene_name))
+            normalized_row = self.get_gene_normalized_protein_quant(gene_row)
+            high_cols, low_cols = self.get_upper_lower_percentage(normalized_row)
+            results[gene_name] = [high_cols, low_cols]
