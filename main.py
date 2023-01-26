@@ -167,11 +167,14 @@ def inference(args):
         tensors.append(img)
 
     tensors = torch.stack(tensors, dim=0)
+    print("Tensors shape: ", tensors.shape)
     answers = []
     for i, m in enumerate(models):
         out = m.model(tensors).detach().numpy()
+        print(out)
         answers.append(np.sum(np.where(out > 0.5, 1, 0), axis=0)[0])
-        print("Model {} said: {}".format(i, answers[-1]))
+        print("Size: ", np.sum(np.where(out > 0.5, 1, 0), axis=0)[0])
+        print("Model {} said: {}".format(i+1, answers[i]))
     print("Mean answer: ", np.asarray(answers).mean())
     print("Mean ratio: ", int(np.asarray(answers).mean()) / len(tensors))
 
