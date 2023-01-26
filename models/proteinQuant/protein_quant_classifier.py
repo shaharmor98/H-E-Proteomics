@@ -36,9 +36,6 @@ class ProteinQuantClassifier(pl.LightningModule):
         y_hat = self(x)
         # one_hot_labels = torch.zeros(x.shape[0], self.NUM_OF_OUT_CLASSES).to(self._device)
         # y = one_hot_labels.scatter_(1, original_labels.view(-1, 1), 1)
-        print("y type: ", y_hat.dtype)
-        print("y float type: ", y_hat.float().dtype)
-        print("original type: ", original_labels.dtype)
         loss = self.loss(y_hat.float(), original_labels)
         accuracy = self.accuracy(y_hat, original_labels)
 
@@ -51,7 +48,7 @@ class ProteinQuantClassifier(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         # this is the validation loop
         x, original_labels = batch
-        original_labels = original_labels.reshape(-1, 1)
+        original_labels = original_labels.reshape(-1, 1).float()
         if len(x) == 1:
             return
         y_hat = self(x)
@@ -69,7 +66,7 @@ class ProteinQuantClassifier(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         # this is the test loop
         x, original_labels = batch
-        original_labels = original_labels.reshape(-1, 1)
+        original_labels = original_labels.reshape(-1, 1).float()
         y_hat = self(x)
         # one_hot_labels = torch.zeros(x.shape[0], self.NUM_OF_OUT_CLASSES).to(self._device)
         # y = one_hot_labels.scatter_(1, original_labels.view(-1, 1), 1)
