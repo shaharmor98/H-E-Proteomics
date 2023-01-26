@@ -4,6 +4,7 @@ import torch.optim as optim
 import torchmetrics
 import torchvision.models as models
 from torch import nn
+from torchvision.models import InceptionOutputs
 
 
 class ProteinQuantClassifier(pl.LightningModule):
@@ -21,8 +22,8 @@ class ProteinQuantClassifier(pl.LightningModule):
         x = self.model(x)
         # if isinstance(x, torch.Tensor):
         #     x = self.fc(x)
-        # elif isinstance(x, InceptionOutputs):
-        #     x = self.fc(x[0])
+        if isinstance(x, InceptionOutputs):
+            x = x[0]
         return x
 
     def training_step(self, batch, batch_idx):
