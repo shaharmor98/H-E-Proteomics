@@ -36,7 +36,8 @@ class TilesKFoldDataModule(BaseKFoldDataModule):
         self.val_fold = None
 
     def setup(self, stage):
-        self.train_indices, self.test_indices = self.dia_metadata.random_shuffle(self.gene_slides_with_labels)
+        self.train_indices, self.test_indices = self.dia_metadata.random_shuffle(self.gene_slides_with_labels,
+                                                                                 self.test_proportion_size)
         print("Those are kfold test indices: ", self.test_indices)
 
     def setup_folds(self, num_folds):

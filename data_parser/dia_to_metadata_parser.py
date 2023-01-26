@@ -181,6 +181,6 @@ class DiaToMetadata(object):
         for instance in low_instances[:test_size]:
             test_ids[instance] = 0
         for instance in low_instances[test_size:]:
-            test_ids[instance] = 0
+            train_ids[instance] = 0
 
         return train_ids, test_ids
