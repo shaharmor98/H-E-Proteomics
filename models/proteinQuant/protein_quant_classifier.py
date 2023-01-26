@@ -30,6 +30,7 @@ class ProteinQuantClassifier(pl.LightningModule):
         # training_step defines the train loop.
         # it is independent of forward
         x, original_labels = batch
+        original_labels = original_labels.reshape(-1, 1)
         if len(x) == 1:
             return
         y_hat = self(x)
@@ -47,6 +48,7 @@ class ProteinQuantClassifier(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         # this is the validation loop
         x, original_labels = batch
+        original_labels = original_labels.reshape(-1, 1)
         if len(x) == 1:
             return
         y_hat = self(x)
@@ -64,6 +66,7 @@ class ProteinQuantClassifier(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         # this is the test loop
         x, original_labels = batch
+        original_labels = original_labels.reshape(-1, 1)
         y_hat = self(x)
         # one_hot_labels = torch.zeros(x.shape[0], self.NUM_OF_OUT_CLASSES).to(self._device)
         # y = one_hot_labels.scatter_(1, original_labels.view(-1, 1), 1)
