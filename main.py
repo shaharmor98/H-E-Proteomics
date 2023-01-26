@@ -152,7 +152,7 @@ def inference(args):
               os.listdir("/home/shaharmor98/checkpoints")]
     for m in models:
         m.eval()
-    
+
     print("Models loaded")
     tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
                                                                patch_size=HostConfiguration.PATCH_SIZE)
