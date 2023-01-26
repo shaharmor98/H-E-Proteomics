@@ -4,7 +4,7 @@ from pytorch_lightning import LightningDataModule
 from sklearn.model_selection import KFold
 from torch.utils.data import DataLoader
 
-from data.tiles.tiles_dataset import TilesDataset
+from models.proteinQuant.tiles_dataset import TilesDataset
 
 
 class BaseKFoldDataModule(LightningDataModule, ABC):
@@ -18,13 +18,13 @@ class BaseKFoldDataModule(LightningDataModule, ABC):
 
 
 class TilesKFoldDataModule(BaseKFoldDataModule):
-    def __init__(self, tiles_directory, transform, tiles_labeler, dia_metadata, batch_size, num_workers,
-                 test_proportion_size=0.1):
+    def __init__(self, tiles_directory, transform, dia_metadata, gene_slides_with_labels,
+                 batch_size, num_workers, test_proportion_size=0.1):
         super().__init__()
         self.tiles_directory = tiles_directory
         self.transform = transform
-        self.tiles_labeler = tiles_labeler
         self.dia_metadata = dia_metadata
+        self.gene_slides_with_labels = gene_slides_with_labels
         self.test_proportion_size = test_proportion_size
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -36,9 +36,7 @@ class TilesKFoldDataModule(BaseKFoldDataModule):
         self.val_fold = None
 
     def setup(self, stage):
-        self.train_indices, self.test_indices = \
-            self.rnr_to_metadata.create_pam50_random_train_test_ids(test_size=self.test_proportion_size,
-                                                                    tiles_directory=self.tiles_directory)
+        self.train_indices, self.test_indices = self.dia_metadata.random_shuffle(self.gene_slides_with_labels)
         print("Those are kfold test indices: ", self.test_indices)
 
     def setup_folds(self, num_folds):
@@ -48,8 +46,8 @@ class TilesKFoldDataModule(BaseKFoldDataModule):
     def setup_fold_index(self, fold_index):
         train_indices, val_indices = self.splits[fold_index]
         train_indices, val_indices = self._translate_indices(train_indices, val_indices)
-        self.train_fold = TilesDataset(self.tiles_directory, self.transform, self.tiles_labeler, train_indices)
-        self.val_fold = TilesDataset(self.tiles_directory, self.transform, self.tiles_labeler, val_indices)
+        self.train_fold = TilesDataset(self.tiles_directory, self.transform, train_indices)
+        self.val_fold = TilesDataset(self.tiles_directory, self.transform, val_indices)
 
     def train_dataloader(self):
         return DataLoader(self.train_fold, batch_size=self.batch_size, num_workers=self.num_workers)
@@ -58,7 +56,7 @@ class TilesKFoldDataModule(BaseKFoldDataModule):
         return DataLoader(self.val_fold, batch_size=self.batch_size, num_workers=self.num_workers)
 
     def test_dataloader(self):
-        return DataLoader(TilesDataset(self.tiles_directory, self.transform, self.tiles_labeler, self.test_indices))
+        return DataLoader(TilesDataset(self.tiles_directory, self.transform, self.test_indices))
 
     def __post_init__(cls):
         super().__init__()

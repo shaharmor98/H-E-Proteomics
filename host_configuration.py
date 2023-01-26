@@ -13,3 +13,5 @@ class HostConfiguration(object):
     ZOOM_LEVEL = 20
     SEED = 42
     CHECKPOINTS_PATH = os.path.join(os.path.expanduser("~"), "checkpoints")
+    CHOSEN_GENE = "CC2D1A"
+    NUM_OF_FOLDS = 10

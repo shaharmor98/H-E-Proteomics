@@ -12,10 +12,9 @@ class TilesDataset(Dataset):
     The ids should be determined by a different function
     """
 
-    def __init__(self, tiles_directory, transform, tiles_labeler, ids, caller=None):
+    def __init__(self, tiles_directory, transform, ids, caller=None):
         self.root_dir = tiles_directory
         self.transform = transform
-        self.tiles_labeler = tiles_labeler
         self._files = self._load_files(ids)
         if caller is None:
             print("No specific caller was defined")
@@ -25,7 +24,7 @@ class TilesDataset(Dataset):
 
     def _load_files(self, ids):
         files = os.listdir(self.root_dir)
-        filtered_files = list(filter(lambda x: any(x.startswith(str(prefix)) for prefix in ids), files))
+        filtered_files = list(filter(lambda x: any(x.startswith(str(prefix[0])) for prefix in ids), files))
         return filtered_files
 
     def __len__(self):

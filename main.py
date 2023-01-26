@@ -13,13 +13,11 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from models.pam50.cross_validation.kfold_loop import KFoldLoop
-from models.pam50.cross_validation.tiles_kfold_data_module import TilesKFoldDataModule
-from data.tiles.tiles_dataset import TilesDataset
-from data.tiles.tiles_labeler import TilesLabeler
-from data_parser.rnr_to_metadata_parser import RNrToMetadata
+from data_parser.dia_to_metadata_parser import DiaToMetadata
 from host_configuration import HostConfiguration
-from models.pam50.pam50_classifier import PAM50Classifier
+from models.proteinQuant.cross_validation.kfold_loop import KFoldLoop
+from models.proteinQuant.cross_validation.tiles_kfold_data_module import TilesKFoldDataModule
+from models.proteinQuant.protein_quant_classifier import ProteinQuantClassifier
 from preprocessor import Preprocessor
 
 
@@ -40,7 +38,7 @@ def preprocess(args):
     preprocessor.start()
 
 
-def train(args):
+def protein_quant_train(args):
     device = args.device
     if device is None:
         print("Device must be provided")
@@ -51,7 +49,49 @@ def train(args):
         tiles_directory_path = args.tiles_dir
 
     wandb_logger = WandbLogger(project="proteomics-project")
-    num_of_workers = int(multiprocessing.cpu_count() / 2)
+    num_of_workers = int(multiprocessing.cpu_count())
+
+    print("Is going to use: {} workers".format(num_of_workers))
+    dia_metadata = DiaToMetadata(HostConfiguration.DIA_GENES_FILE_PATH, HostConfiguration.RNR_METADATA_FILE_PATH,
+                                 tiles_directory_path)
+    gene_slides_with_labels = dia_metadata.get_gene_slides_with_labels(HostConfiguration.CHOSEN_GENE)
+    transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
+                                            transforms.ToTensor(),
+                                            transforms.Normalize(mean=[0.], std=[255.])])
+    test_proportion_size = 0.15
+
+    train, test = dia_metadata.random_shuffle(gene_slides_with_labels, test_proportion_size)
+    print("Test: ", test)
+
+    model = ProteinQuantClassifier(device).to(device)
+    datamodule = TilesKFoldDataModule(tiles_directory_path, transform_compose, dia_metadata, gene_slides_with_labels,
+                                      batch_size=16, num_workers=num_of_workers,
+                                      test_proportion_size=test_proportion_size)
+    trainer = pl.Trainer(max_epochs=20, devices="auto", accelerator="auto",
+                         num_sanity_val_steps=0, logger=wandb_logger,
+                         callbacks=[EarlyStopping(monitor="val_loss", mode="min")],
+                         default_root_dir=HostConfiguration.CHECKPOINTS_PATH)
+    internal_fit_loop = trainer.fit_loop
+
+    trainer.fit_loop = KFoldLoop(HostConfiguration.NUM_OF_FOLDS, export_path=HostConfiguration.CHECKPOINTS_PATH,
+                                 device=device)
+    trainer.fit_loop.connect(internal_fit_loop)
+    trainer.fit(model, datamodule)
+
+
+"""
+def pam50_train(args):
+    device = args.device
+    if device is None:
+        print("Device must be provided")
+
+    tiles_directory_path = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
+                                                                    patch_size=HostConfiguration.PATCH_SIZE)
+    if args.tiles_dir:
+        tiles_directory_path = args.tiles_dir
+
+    wandb_logger = WandbLogger(project="proteomics-project")
+    num_of_workers = int(multiprocessing.cpu_count())
 
     print("Is going to use: {} workers".format(num_of_workers))
 
@@ -83,7 +123,7 @@ def train(args):
                          default_root_dir=HostConfiguration.CHECKPOINTS_PATH)
     internal_fit_loop = trainer.fit_loop
 
-    trainer.fit_loop = KFoldLoop(5, export_path=HostConfiguration.CHECKPOINTS_PATH,
+    trainer.fit_loop = KFoldLoop(HostConfiguration.NUM_OF_FOLDS, export_path=HostConfiguration.CHECKPOINTS_PATH,
                                  num_of_classes=PAM50Classifier.NUM_OF_OUT_CLASSES, device=device)
     trainer.fit_loop.connect(internal_fit_loop)
     trainer.fit(model, datamodule)
@@ -92,6 +132,7 @@ def train(args):
 
     # test the model
     trainer.test(model, dataloaders=DataLoader(test_dataset))
+"""
 
 
 def prepare_train_env():
