@@ -36,7 +36,7 @@ class ProteinQuantClassifier(pl.LightningModule):
         y_hat = self(x)
         # one_hot_labels = torch.zeros(x.shape[0], self.NUM_OF_OUT_CLASSES).to(self._device)
         # y = one_hot_labels.scatter_(1, original_labels.view(-1, 1), 1)
-        loss = self.loss(y_hat, original_labels)
+        loss = self.loss(y_hat.float(), original_labels)
         accuracy = self.accuracy(y_hat, original_labels)
 
         # _, preds = torch.max(y_hat, dim=1)
@@ -54,7 +54,7 @@ class ProteinQuantClassifier(pl.LightningModule):
         y_hat = self(x)
         # one_hot_labels = torch.zeros(x.shape[0], self.NUM_OF_OUT_CLASSES).to(self._device)
         # y = one_hot_labels.scatter_(1, original_labels.view(-1, 1), 1)
-        val_loss = self.loss(y_hat, original_labels)
+        val_loss = self.loss(y_hat.float(), original_labels)
         accuracy = self.accuracy(y_hat, original_labels)
 
         # _, preds = torch.max(y_hat, dim=1)
@@ -70,7 +70,7 @@ class ProteinQuantClassifier(pl.LightningModule):
         y_hat = self(x)
         # one_hot_labels = torch.zeros(x.shape[0], self.NUM_OF_OUT_CLASSES).to(self._device)
         # y = one_hot_labels.scatter_(1, original_labels.view(-1, 1), 1)
-        test_loss = self.loss(y_hat, original_labels)
+        test_loss = self.loss(y_hat.float(), original_labels)
         accuracy = self.accuracy(y_hat, original_labels)
 
         # _, preds = torch.max(y_hat, dim=1)
