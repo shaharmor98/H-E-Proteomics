@@ -190,7 +190,7 @@ def main():
     elif args.train:
         seed_everything(HostConfiguration.SEED)
         prepare_train_env()
-        train(args)
+        protein_quant_train(args)
     elif args.inference:
         # inference()
         pass
