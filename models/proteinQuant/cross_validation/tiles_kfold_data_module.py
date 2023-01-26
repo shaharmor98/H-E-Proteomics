@@ -36,8 +36,10 @@ class TilesKFoldDataModule(BaseKFoldDataModule):
         self.val_fold = None
 
     def setup(self, stage):
-        self.train_indices, self.test_indices = self.dia_metadata.random_shuffle(self.gene_slides_with_labels,
-                                                                                 self.test_proportion_size)
+        train, test = self.dia_metadata.random_shuffle(self.gene_slides_with_labels,
+                                                       self.test_proportion_size)
+        self.train_indices = list(train.items())
+        self.test_indices = list(test.items())
         print("Those are kfold test indices: ", self.test_indices)
 
     def setup_folds(self, num_folds):
@@ -47,8 +49,8 @@ class TilesKFoldDataModule(BaseKFoldDataModule):
     def setup_fold_index(self, fold_index):
         train_indices, val_indices = self.splits[fold_index]
         train_indices, val_indices = self._translate_indices(train_indices, val_indices)
-        self.train_fold = TilesDataset(self.tiles_directory, self.transform, train_indices)
-        self.val_fold = TilesDataset(self.tiles_directory, self.transform, val_indices)
+        self.train_fold = TilesDataset(self.tiles_directory, self.transform, train_indices, caller="Train dataset")
+        self.val_fold = TilesDataset(self.tiles_directory, self.transform, val_indices, caller="Val dataset")
 
     def train_dataloader(self):
         return DataLoader(self.train_fold, batch_size=self.batch_size, num_workers=self.num_workers)
@@ -57,7 +59,7 @@ class TilesKFoldDataModule(BaseKFoldDataModule):
         return DataLoader(self.val_fold, batch_size=self.batch_size, num_workers=self.num_workers)
 
     def test_dataloader(self):
-        return DataLoader(TilesDataset(self.tiles_directory, self.transform, self.test_indices))
+        return DataLoader(TilesDataset(self.tiles_directory, self.transform, self.test_indices, caller="Test dataset"))
 
     def __post_init__(cls):
         super().__init__()
