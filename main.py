@@ -146,7 +146,13 @@ def inference(args):
     # tiles_directory = args.tiles_dir
 
     test_id = args.test_id
-    models = [ProteinQuantClassifier.load_from_checkpoint(m) for m in os.listdir("/home/shaharmor98/checkpoints")]
+    checkpoint_path = "/home/shaharmor98/checkpoints"
+    torch.set_grad_enabled(False)
+    models = [ProteinQuantClassifier.load_from_checkpoint(os.path.join(checkpoint_path, m)) for m in
+              os.listdir("/home/shaharmor98/checkpoints")]
+    for m in models:
+        m.eval()
+    
     print("Models loaded")
     tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
                                                                patch_size=HostConfiguration.PATCH_SIZE)
