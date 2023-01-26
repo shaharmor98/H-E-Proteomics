@@ -28,6 +28,7 @@ def init_argparse():
     parser.add_argument("-t", "--train", action="store_true")
     parser.add_argument("-device", type=str)
     parser.add_argument("-tiles_dir", type=str)
+    parser.add_argument("-test_id", type=str)
     parser.add_argument("-i", "--inference", action="store_true")
     return parser
 
@@ -141,15 +142,37 @@ def prepare_train_env():
 
 
 def inference(args):
-    model = PAM50Classifier.load_from_checkpoint(args.model_path)
-    softmax = nn.Softmax(dim=1)
+    # model = ProteinQuantClassifier.load_from_checkpoint(args.model_path)
+    # tiles_directory = args.tiles_dir
 
-    tiles_directory = args.tiles_dir
-    ids = []
+    test_id = args.test_id
+    models = [ProteinQuantClassifier.load_from_checkpoint(m) for m in os.listdir("/home/shaharmor98/checkpoints")]
+    print("Models loaded")
+    tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
+                                                               patch_size=HostConfiguration.PATCH_SIZE)
+    img_tiles = [t for t in os.listdir(tiles_directory) if t.startswith(test_id)]
+    tensors = []
+    transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
+                                            transforms.ToTensor(),
+                                            transforms.Normalize(mean=[0.], std=[255.])])
+    for t in img_tiles:
+        img = Image.open(os.path.join(tiles_directory, t))
+        img = transform_compose(img)
+        tensors.append(img)
+
+    tensors = torch.stack(tensors, dim=0)
+    answers = []
+    for i, m in enumerate(models):
+        out = m.model(tensors).detach().numpy()
+        answers.append(np.sum(np.where(out > 0.5, 1, 0), axis=0)[0])
+        print("Model {} said: {}".format(i, answers[-1]))
+    print("Mean answer: ", np.asarray(answers).mean())
+    print("Mean ratio: ", int(np.asarray(answers).mean()) / len(tensors))
+
+    """ids = []
     for i in ids:
         print("Starting ", i)
         img_tiles = [t for t in os.listdir(tiles_directory) if t.startswith(i)]
-        print("Found {} tiles".format(len(img_tiles)))
         if len(img_tiles) == 0:
             continue
         tensors = []
@@ -163,6 +186,11 @@ def inference(args):
             tensors.append(img)
 
         tensors = torch.stack(tensors, dim=0)
+        out = model(tensors).detach().numpy()
+        confidence_threshold = 0.5
+        mask = out > confidence_threshold
+        indexes = np.where(mask.any(axis=1), np.argmax(mask, axis=1), -1)
+
         splits = torch.tensor_split(tensors, len(tensors) // 50)
         partial_voted = []
         for split in splits:
@@ -179,6 +207,7 @@ def inference(args):
         most_voted_tile = np.asarray(partial_voted)
         most_voted_tile = np.argmax(np.bincount(most_voted_tile.astype(int)))
         print("Id: {} got: {}".format(i, most_voted_tile))
+        """
 
 
 def main():
@@ -192,8 +221,7 @@ def main():
         prepare_train_env()
         protein_quant_train(args)
     elif args.inference:
-        # inference()
-        pass
+        inference(args)
 
 
 if __name__ == '__main__':
