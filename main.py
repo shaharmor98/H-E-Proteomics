@@ -60,6 +60,7 @@ def protein_quant_train(args):
     device = args.device
     if device is None:
         print("Device must be provided")
+        exit(1)
 
     tiles_directory_path = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
                                                                     patch_size=HostConfiguration.PATCH_SIZE)
