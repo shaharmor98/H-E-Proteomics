@@ -91,8 +91,7 @@ def protein_quant_train(args):
     datamodule = TilesKFoldDataModule(tiles_directory_path, transform_compose, dia_metadata, gene_slides_with_labels,
                                       batch_size=16, num_workers=num_of_workers,
                                       test_proportion_size=test_proportion_size)
-    # TODO- change to 20 or more!!!!
-    trainer = pl.Trainer(max_epochs=1, devices="auto", accelerator="auto",
+    trainer = pl.Trainer(max_epochs=5, devices="auto", accelerator="auto",
                          num_sanity_val_steps=0, logger=wandb_logger,
                          callbacks=[EarlyStopping(monitor="val_epoch_loss", mode="min")],
                          default_root_dir=HostConfiguration.CHECKPOINTS_PATH)
@@ -167,8 +166,8 @@ def prepare_train_env():
 
 def inference(args):
     checkpoint_paths = [os.path.join(HostConfiguration.CHECKPOINTS_PATH, f"model.{f_idx + 1}.pt")
-                        for f_idx in range(7)]
-    # for f_idx in range(HostConfiguration.NUM_OF_FOLDS)]
+                        # for f_idx in range(7)]
+                        for f_idx in range(HostConfiguration.NUM_OF_FOLDS)]
     # models = [ProteinQuantClassifier.load_from_checkpoint(p) for p in checkpoint_paths]
     tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
                                                                patch_size=HostConfiguration.PATCH_SIZE)
