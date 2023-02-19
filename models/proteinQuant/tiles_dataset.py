@@ -22,6 +22,9 @@ class TilesDataset(Dataset):
             print("Initiating dataset for: ", caller)
         print("Loading: {} files".format(len(self._files)))
 
+    def get_num_of_files(self):
+        return len(self._files)
+
     def _load_files(self, ids):
         files = os.listdir(self.root_dir)
         mapped_ids = dict(ids)

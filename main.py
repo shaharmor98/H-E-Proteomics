@@ -1,4 +1,5 @@
 import argparse
+import json
 import multiprocessing
 import os.path
 
@@ -164,19 +165,33 @@ def prepare_train_env():
 
 
 def inference(args):
-checkpoint_paths = [os.path.join(HostConfiguration.CHECKPOINTS_PATH, f"model.{f_idx + 1}.pt")
-                    for f_idx in range(HostConfiguration.NUM_OF_FOLDS)]
-#models = torch.nn.ModuleList([ProteinQuantClassifier.load_from_checkpoint(p) for p in checkpoint_paths])
-tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
-                                                           patch_size=HostConfiguration.PATCH_SIZE)
-transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
-                                        transforms.ToTensor(),
-                                        transforms.Normalize(mean=[0.], std=[255.])])
-model = ProteinQuantClassifier.load_from_checkpoint(checkpoint_paths[0])
-#test_id = args.test_id
-trainer = pl.Trainer()
-predictions = trainer.predict(model, dataloaders=DataLoader(
-    TilesDataset(tiles_directory, transform_compose, test_id, caller="Prediction dataset")))
+    checkpoint_paths = [os.path.join(HostConfiguration.CHECKPOINTS_PATH, f"model.{f_idx + 1}.pt")
+                        for f_idx in range(HostConfiguration.NUM_OF_FOLDS)]
+    # models = [ProteinQuantClassifier.load_from_checkpoint(p) for p in checkpoint_paths]
+    tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
+                                                               patch_size=HostConfiguration.PATCH_SIZE)
+    transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
+                                            transforms.ToTensor(),
+                                            transforms.Normalize(mean=[0.], std=[255.])])
+    trainer = pl.Trainer()
+
+    # Note, those ids selected due to 42 random seed value
+    test_ids = [('PD31111a', 1), ('PD31125a', 1), ('PD31059a', 1), ('PD36036a', 1), ('PD36051a', 1),
+                ('PD36019a', 0), ('PD36002a', 0), ('PD31058a', 0), ('PD36060a', 0), ('PD31098a', 0)]
+
+    results = {}
+    for ckpt_path in checkpoint_paths:
+        model = ProteinQuantClassifier.load_from_checkpoint(ckpt_path)
+        model_name = os.path.basename(ckpt_path)
+        results[model_name] = {}
+        for test_id in test_ids:
+            dataset = TilesDataset(tiles_directory, transform_compose, test_id, caller="Prediction dataset")
+            predictions = trainer.predict(model, dataloaders=DataLoader(dataset))
+            total = np.sum(np.where(np.asarray(predictions) > 0.5, 1, 0), axis=0)
+            ratio = total / dataset.get_num_of_files()
+            results[model_name][test_id[0]] = ratio
+    with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE, "w") as f:
+        json.dump(results, f)
 
 
 def old_inference(args):
