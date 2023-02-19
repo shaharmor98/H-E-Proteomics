@@ -167,7 +167,8 @@ def prepare_train_env():
 
 def inference(args):
     checkpoint_paths = [os.path.join(HostConfiguration.CHECKPOINTS_PATH, f"model.{f_idx + 1}.pt")
-                        for f_idx in range(HostConfiguration.NUM_OF_FOLDS)]
+                        for f_idx in range(7)]
+                        # for f_idx in range(HostConfiguration.NUM_OF_FOLDS)]
     # models = [ProteinQuantClassifier.load_from_checkpoint(p) for p in checkpoint_paths]
     tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
                                                                patch_size=HostConfiguration.PATCH_SIZE)
@@ -185,12 +186,14 @@ def inference(args):
         model = ProteinQuantClassifier.load_from_checkpoint(ckpt_path)
         model_name = os.path.basename(ckpt_path)
         results[model_name] = {}
+        print("Starting {}".format(model_name))
         for test_id in test_ids:
-            dataset = TilesDataset(tiles_directory, transform_compose, test_id, caller="Prediction dataset")
+            dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
             predictions = trainer.predict(model, dataloaders=DataLoader(dataset))
             total = np.sum(np.where(np.asarray(predictions) > 0.5, 1, 0), axis=0)
             ratio = total / dataset.get_num_of_files()
             results[model_name][test_id[0]] = ratio
+            print("ID: {} got ratio of: {}".format(test_id, ratio))
     with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE, "w") as f:
         json.dump(results, f)
 
