@@ -10,7 +10,6 @@ class QuantEnsembleVotingModel(LightningModule):
         # Create `num_folds` models with their associated fold weights
         self.models = torch.nn.ModuleList([model_cls.load_from_checkpoint(p) for p in checkpoint_paths])
         self.test_acc = BinaryAccuracy(threshold=0.75)
-
         self._device = device
 
     def test_step(self, batch, batch_idx, dataloader_idx=0):

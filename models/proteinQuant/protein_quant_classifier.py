@@ -1,3 +1,4 @@
+import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.optim as optim
@@ -52,6 +53,14 @@ class ProteinQuantClassifier(pl.LightningModule):
         self.log('val_loss', val_loss, prog_bar=True)
         self.log('val_acc', accuracy, prog_bar=True)
         return {"loss": val_loss, "acc": accuracy}
+
+    def validation_epoch_end(self, outputs):
+        losses = []
+        for output in outputs:
+            losses.append(output["loss"])
+
+        print("val_epoch_loss", np.asarray(losses).mean())
+        self.log("val_epoch_loss", np.asarray(losses).mean())
 
     def test_step(self, batch, batch_idx):
         # this is the test loop

@@ -28,27 +28,33 @@ class TilesKFoldDataModule(BaseKFoldDataModule):
         self.test_proportion_size = test_proportion_size
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.train_indices = None
+        self.high_train_indices = None
+        self.low_train_indices = None
         self.test_indices = None
         self.num_folds = None
-        self.splits = None
+        self.high_splits = None
+        self.low_splits = None
         self.train_fold = None
         self.val_fold = None
 
     def setup(self, stage):
-        train, test = self.dia_metadata.random_shuffle(self.gene_slides_with_labels,
-                                                       self.test_proportion_size)
-        self.train_indices = list(train.items())
-        self.test_indices = list(test.items())
-        print("Those are kfold test indices: ", self.test_indices)
+        high_train, low_train, high_test, low_test = self.dia_metadata.random_disjoint_shuffle(
+            self.gene_slides_with_labels,
+            self.test_proportion_size)
+        self.high_train_indices = list(high_train.items())
+        self.low_train_indices = list(low_train.items())
+        self.test_indices = list(high_test.items()) + list(low_test.items())
 
     def setup_folds(self, num_folds):
         self.num_folds = num_folds
-        self.splits = [split for split in KFold(num_folds).split(range(len(self.train_indices)))]
+        self.high_splits = [split for split in KFold(num_folds).split(range(len(self.high_train_indices)))]
+        self.low_splits = [split for split in KFold(num_folds).split(range(len(self.low_train_indices)))]
 
     def setup_fold_index(self, fold_index):
-        train_indices, val_indices = self.splits[fold_index]
-        train_indices, val_indices = self._translate_indices(train_indices, val_indices)
+        high_train_indices, high_val_indices = self.high_splits[fold_index]
+        low_train_indices, low_val_indices = self.low_splits[fold_index]
+        train_indices, val_indices = self._translate_indices(high_train_indices, high_val_indices, low_train_indices,
+                                                             low_val_indices)
         self.train_fold = TilesDataset(self.tiles_directory, self.transform, train_indices, caller="Train dataset")
         self.val_fold = TilesDataset(self.tiles_directory, self.transform, val_indices, caller="Val dataset")
 
@@ -64,15 +70,21 @@ class TilesKFoldDataModule(BaseKFoldDataModule):
     def __post_init__(cls):
         super().__init__()
 
-    def _translate_indices(self, train_indices, val_indices):
+    def _translate_indices(self, high_train_indices, high_val_indices, low_train_indices, low_val_indices):
         # KFold split by index, thus we will translate back to SCANB_PD_ID indices
         translated_train_indices = []
         translated_val_indices = []
 
-        for t in train_indices:
-            translated_train_indices.append(self.train_indices[t])
+        for t in high_train_indices:
+            translated_train_indices.append(self.high_train_indices[t])
 
-        for t in val_indices:
-            translated_val_indices.append(self.train_indices[t])
+        for t in low_train_indices:
+            translated_train_indices.append(self.low_train_indices[t])
+
+        for t in high_val_indices:
+            translated_val_indices.append(self.high_train_indices[t])
+
+        for t in low_val_indices:
+            translated_val_indices.append(self.low_train_indices[t])
 
         return translated_train_indices, translated_val_indices

@@ -87,7 +87,7 @@ def protein_quant_train(args):
                                       test_proportion_size=test_proportion_size)
     trainer = pl.Trainer(max_epochs=20, devices="auto", accelerator="auto",
                          num_sanity_val_steps=0, logger=wandb_logger,
-                         callbacks=[EarlyStopping(monitor="val_loss", mode="min")],
+                         callbacks=[EarlyStopping(monitor="val_epoch_loss", mode="min")],
                          default_root_dir=HostConfiguration.CHECKPOINTS_PATH)
     internal_fit_loop = trainer.fit_loop
 
