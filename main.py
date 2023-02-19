@@ -18,7 +18,9 @@ from host_configuration import HostConfiguration
 from models.proteinQuant.cross_validation.kfold_loop import KFoldLoop
 from models.proteinQuant.cross_validation.tiles_kfold_data_module import TilesKFoldDataModule
 from models.proteinQuant.protein_quant_classifier import ProteinQuantClassifier
+from models.proteinQuant.tiles_dataset import TilesDataset
 from preprocessor import Preprocessor
+
 
 def run(model):
     files = os.listdir("/home/shaharmor98/proteomics-tiles-shahar-mor/images/zoom_20_size_512/")
@@ -37,6 +39,7 @@ def run(model):
         tensors = torch.stack(tensors, dim=0)
         out = model.model(tensors)
         return out
+
 
 def init_argparse():
     parser = argparse.ArgumentParser()
@@ -86,7 +89,8 @@ def protein_quant_train(args):
     datamodule = TilesKFoldDataModule(tiles_directory_path, transform_compose, dia_metadata, gene_slides_with_labels,
                                       batch_size=16, num_workers=num_of_workers,
                                       test_proportion_size=test_proportion_size)
-    trainer = pl.Trainer(max_epochs=20, devices="auto", accelerator="auto",
+    # TODO- change to 20 or more!!!!
+    trainer = pl.Trainer(max_epochs=1, devices="auto", accelerator="auto",
                          num_sanity_val_steps=0, logger=wandb_logger,
                          callbacks=[EarlyStopping(monitor="val_epoch_loss", mode="min")],
                          default_root_dir=HostConfiguration.CHECKPOINTS_PATH)
@@ -160,6 +164,22 @@ def prepare_train_env():
 
 
 def inference(args):
+    checkpoint_paths = [os.path.join(HostConfiguration.CHECKPOINTS_PATH, f"model.{f_idx + 1}.pt")
+                        for f_idx in range(HostConfiguration.NUM_OF_FOLDS)]
+    models = torch.nn.ModuleList([ProteinQuantClassifier.load_from_checkpoint(p) for p in checkpoint_paths])
+    tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
+                                                               patch_size=HostConfiguration.PATCH_SIZE)
+    transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
+                                            transforms.ToTensor(),
+                                            transforms.Normalize(mean=[0.], std=[255.])])
+    model = ProteinQuantClassifier.load_from_checkpoint(checkpoint_paths[0])
+    test_id = args.test_id
+    trainer = pl.Trainer()
+    predictions = trainer.predict(model, dataloaders=DataLoader(
+        TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")))
+
+
+def old_inference(args):
     # model = ProteinQuantClassifier.load_from_checkpoint(args.model_path)
     # tiles_directory = args.tiles_dir
 
@@ -190,7 +210,7 @@ def inference(args):
     for i, m in enumerate(models):
         out = m.model(tensors).detach().numpy()
         answers.append(np.sum(np.where(out > 0.5, 1, 0), axis=0)[0])
-        print("Model {} said: {}".format(i+1, answers[i]))
+        print("Model {} said: {}".format(i + 1, answers[i]))
     print("Mean answer: ", np.asarray(answers).mean())
     print("Mean ratio: ", int(np.asarray(answers).mean()) / len(tensors))
 

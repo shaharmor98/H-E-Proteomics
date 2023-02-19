@@ -66,6 +66,7 @@ class KFoldLoop(Loop):
 
     def on_run_end(self) -> None:
         """Used to compute the performance of the ensemble model on the test set."""
+        return
         checkpoint_paths = [osp.join(self.export_path, f"model.{f_idx + 1}.pt") for f_idx in range(self.num_folds)]
         voting_model = QuantEnsembleVotingModel(type(self.trainer.lightning_module), checkpoint_paths, self.device)
         voting_model.trainer = self.trainer
