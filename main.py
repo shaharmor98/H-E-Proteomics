@@ -5,6 +5,7 @@ import os.path
 
 import numpy as np
 import pytorch_lightning as pl
+import scipy
 import torch
 from PIL import Image
 from lightning_lite import seed_everything
@@ -71,7 +72,7 @@ def protein_quant_train(args):
     if args.tiles_dir:
         tiles_directory_path = args.tiles_dir
 
-    wandb_logger = WandbLogger(project="proteomics-project")
+    wandb_logger = WandbLogger(project="proteomics-project", log_model=True)
     num_of_workers = int(multiprocessing.cpu_count())
 
     print("Is going to use: {} workers".format(num_of_workers))
@@ -192,6 +193,17 @@ def inference(args):
             results[model_name][test_id[0]] = ratio
     with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE, "w") as f:
         json.dump(results, f)
+
+
+def spearman_correlation_test():
+    tiles_directory_path = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
+                                                                    patch_size=HostConfiguration.PATCH_SIZE)
+    dia_metadata = DiaToMetadata(HostConfiguration.DIA_GENES_FILE_PATH, HostConfiguration.RNR_METADATA_FILE_PATH,
+                                 tiles_directory_path)
+    row = dia_metadata.get_normalized_gene_records
+
+    # scipy.stats.spearmanr(pred, real2)
+    return row
 
 
 def old_inference(args):

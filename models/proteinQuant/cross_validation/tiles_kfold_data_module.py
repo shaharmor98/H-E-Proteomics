@@ -44,6 +44,7 @@ class TilesKFoldDataModule(BaseKFoldDataModule):
         self.high_train_indices = list(high_train.items())
         self.low_train_indices = list(low_train.items())
         self.test_indices = list(high_test.items()) + list(low_test.items())
+        print("Test indices: ", self.test_indices)
 
     def setup_folds(self, num_folds):
         self.num_folds = num_folds
@@ -65,7 +66,8 @@ class TilesKFoldDataModule(BaseKFoldDataModule):
         return DataLoader(self.val_fold, batch_size=self.batch_size, num_workers=self.num_workers)
 
     def test_dataloader(self):
-        return DataLoader(TilesDataset(self.tiles_directory, self.transform, self.test_indices, caller="Test dataset"))
+        return DataLoader(TilesDataset(self.tiles_directory, self.transform, self.test_indices, caller="Test dataset"),
+                          num_workers=self.num_workers)
 
     def __post_init__(cls):
         super().__init__()

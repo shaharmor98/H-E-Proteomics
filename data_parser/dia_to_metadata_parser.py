@@ -78,6 +78,19 @@ class DiaToMetadata(object):
 
         return potential_ids
 
+    def get_normalized_gene_records(self, gene_name):
+        tnbc = self.get_tnbc_unique_df()
+        ids = self.get_existing_slides_ids()
+        tnbc = tnbc[tnbc['SCANB_PD_ID'].isin(ids.keys())]
+        rnrs = self.map_scanb_pd_id_to_rnr(tnbc['SCANB_PD_ID'].to_list())
+        genes = self.get_genes_with_complete_records(rnrs)
+        gene_row = genes.loc[genes['Gene_symbol'] == gene_name]
+        if len(gene_row) != 1:
+            raise RuntimeError("WTF just happened with {}".format(gene_name))
+
+        normalized_row = self.get_gene_normalized_protein_quant(gene_row)
+        return normalized_row
+
     def get_gene_slides_with_labels(self, gene_name):
         tnbc = self.get_tnbc_unique_df()
         ids = self.get_existing_slides_ids()
