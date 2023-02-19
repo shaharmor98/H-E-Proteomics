@@ -20,6 +20,23 @@ from models.proteinQuant.cross_validation.tiles_kfold_data_module import TilesKF
 from models.proteinQuant.protein_quant_classifier import ProteinQuantClassifier
 from preprocessor import Preprocessor
 
+def run(model):
+    files = os.listdir("/home/shaharmor98/proteomics-tiles-shahar-mor/images/zoom_20_size_512/")
+    target = "PD35985a"
+    tiles_directory = "/home/shaharmor98/proteomics-tiles-shahar-mor/images/zoom_20_size_512/"
+    img_tiles = [f for f in files if f.startswith(target)]
+    tensors = []
+    transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
+                                            transforms.ToTensor(),
+                                            transforms.Normalize(mean=[0.], std=[255.])])
+    for t in img_tiles:
+        img = Image.open(os.path.join(tiles_directory, t))
+        img = transform_compose(img)
+        tensors.append(img)
+
+        tensors = torch.stack(tensors, dim=0)
+        out = model.model(tensors)
+        return out
 
 def init_argparse():
     parser = argparse.ArgumentParser()
@@ -171,9 +188,7 @@ def inference(args):
     answers = []
     for i, m in enumerate(models):
         out = m.model(tensors).detach().numpy()
-        print(out)
         answers.append(np.sum(np.where(out > 0.5, 1, 0), axis=0)[0])
-        print("Size: ", np.sum(np.where(out > 0.5, 1, 0), axis=0)[0])
         print("Model {} said: {}".format(i+1, answers[i]))
     print("Mean answer: ", np.asarray(answers).mean())
     print("Mean ratio: ", int(np.asarray(answers).mean()) / len(tensors))

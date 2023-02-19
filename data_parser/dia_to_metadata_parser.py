@@ -127,8 +127,6 @@ class DiaToMetadata(object):
             results[gene_name] = [high_cols, low_cols]
             summary_results[gene_name] = [high_percentile, low_percentile]
 
-        # try to sort by those whose 20% and 80% are the most significant..
-
         """
         dist_summary = {}                                              
         for k,v in summary_results.items():                                                       
@@ -138,26 +136,10 @@ class DiaToMetadata(object):
         sorted_dict = dict(sorted(dist_summary.items(), key=lambda x: x[1][0], reverse=True))
         """
         """
-        Gene: CC2D1A, distance: 0.45659020244730475; high: 0.5464200181355323; low: 0.08982981568822758
-        Gene: IL1RL1, distance: 0.4313145627292086; high: 0.5538109614983974; low: 0.12249639876918879
-        Gene: FLNA, distance: 0.4233408823076643; high: 0.5841377008192563; low: 0.160796818511592
-        Gene: ANP32B, distance: 0.41526041861039276; high: 0.5265247184527895; low: 0.1112642998423967
-        Gene: TPM3, distance: 0.4117285671735882; high: 0.4922182676882266; low: 0.08048970051463837
-        Gene: PLEKHO2, distance: 0.41041719006617156; high: 0.6080892474882015; low: 0.19767205742202992
-        Gene: CCDC134, distance: 0.40758713121307827; high: 0.5583495832542409; low: 0.15076245204116262
-        Gene: RPS15A, distance: 0.4069616364820037; high: 0.6672253662265061; low: 0.2602637297445024
-        Gene: COX5A, distance: 0.4066843127938558; high: 0.6776681937126363; low: 0.2709838809187805
-        Gene: PABPN1, distance: 0.4060252181494216; high: 0.5788087136823336; low: 0.17278349553291192
-        Gene: STAT1, distance: 0.40545945263553945; high: 0.5408551981801274; low: 0.13539574554458794
-        Gene: CFL1, distance: 0.4032360800565875; high: 0.7447725295044771; low: 0.34153644944788963
-        Gene: EIF3A, distance: 0.40245241403758714; high: 0.5020887156514047; low: 0.09963630161381751
-        Gene: PSMD8, distance: 0.4023671938715052; high: 0.6321002455952025; low: 0.2297330517236973
-        Gene: EIF2S3, distance: 0.39926495017183794; high: 0.6527281073845488; low: 0.25346315721271084
-        Gene: MBNL1, distance: 0.3982878159242543; high: 0.5942889709570055; low: 0.19600115503275123
-        Gene: PACS1, distance: 0.3942722554301032; high: 0.4990865782763056; low: 0.1048143228462024
-        Gene: HLA-C, distance: 0.38670822471874; high: 0.48883242492037154; low: 0.10212420020163153
-        Gene: NFKB2, distance: 0.38429598669478443; high: 0.4768618062047525; low: 0.09256581950996805
-        Gene: RPS9, distance: 0.3820729407982868; high: 0.6142004822946795; low: 0.2321275414963927
+        * start with '*'
+        * Gene: STAT1, distance: 0.40545945263553945; high: 0.5408551981801274; low: 0.13539574554458794
+        * Gene: HLA-C, distance: 0.38670822471874; high: 0.48883242492037154; low: 0.10212420020163153
+        * Gene: NFKB2, distance: 0.38429598669478443; high: 0.4768618062047525; low: 0.09256581950996805
         """
         return results, summary_results
 
@@ -184,3 +166,29 @@ class DiaToMetadata(object):
             train_ids[instance] = 0
 
         return train_ids, test_ids
+
+    def random_disjoint_shuffle(self, gene_slides_with_labels, test_proportion=0.1):
+        high_instances = [slide for slide, label in gene_slides_with_labels.items() if label == 1]
+        low_instances = [slide for slide, label in gene_slides_with_labels.items() if label == 0]
+
+        test_size = int(len(high_instances) * test_proportion)
+
+        random.seed(HostConfiguration.SEED)
+        random.shuffle(high_instances)
+        random.shuffle(low_instances)
+
+        high_train_ids = {}
+        low_train_ids = {}
+        high_test_ids = {}
+        low_test_ids = {}
+
+        for instance in high_instances[:test_size]:
+            high_test_ids[instance] = 1
+        for instance in high_instances[test_size:]:
+            high_train_ids[instance] = 1
+        for instance in low_instances[:test_size]:
+            low_test_ids[instance] = 0
+        for instance in low_instances[test_size:]:
+            low_train_ids[instance] = 0
+
+        return high_train_ids, low_train_ids, high_test_ids, low_test_ids

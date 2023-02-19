@@ -27,20 +27,14 @@ class ProteinQuantClassifier(pl.LightningModule):
         return x
 
     def training_step(self, batch, batch_idx):
-        # training_step defines the train loop.
-        # it is independent of forward
         x, original_labels = batch
         original_labels = original_labels.reshape(-1, 1).float()
         if len(x) == 1:
             return
         y_hat = self(x)
-        # one_hot_labels = torch.zeros(x.shape[0], self.NUM_OF_OUT_CLASSES).to(self._device)
-        # y = one_hot_labels.scatter_(1, original_labels.view(-1, 1), 1)
         loss = self.loss(y_hat.float(), original_labels)
         accuracy = self.accuracy(y_hat, original_labels)
 
-        # _, preds = torch.max(y_hat, dim=1)
-        # acc = torch.sum(preds == original_labels).float() / len(y)
         self.log('train_loss', loss, prog_bar=True)
         self.log('train_acc', accuracy, prog_bar=True)
         return {'loss': loss, 'acc': accuracy}
@@ -52,13 +46,9 @@ class ProteinQuantClassifier(pl.LightningModule):
         if len(x) == 1:
             return
         y_hat = self(x)
-        # one_hot_labels = torch.zeros(x.shape[0], self.NUM_OF_OUT_CLASSES).to(self._device)
-        # y = one_hot_labels.scatter_(1, original_labels.view(-1, 1), 1)
         val_loss = self.loss(y_hat.float(), original_labels)
         accuracy = self.accuracy(y_hat, original_labels)
 
-        # _, preds = torch.max(y_hat, dim=1)
-        # acc = torch.sum(preds == original_labels).float() / len(y)
         self.log('val_loss', val_loss, prog_bar=True)
         self.log('val_acc', accuracy, prog_bar=True)
         return {"loss": val_loss, "acc": accuracy}
@@ -68,13 +58,8 @@ class ProteinQuantClassifier(pl.LightningModule):
         x, original_labels = batch
         original_labels = original_labels.reshape(-1, 1).float()
         y_hat = self(x)
-        # one_hot_labels = torch.zeros(x.shape[0], self.NUM_OF_OUT_CLASSES).to(self._device)
-        # y = one_hot_labels.scatter_(1, original_labels.view(-1, 1), 1)
         test_loss = self.loss(y_hat.float(), original_labels)
         accuracy = self.accuracy(y_hat, original_labels)
-
-        # _, preds = torch.max(y_hat, dim=1)
-        # acc = torch.sum(preds == original_labels).float() / len(y)
 
         self.log('test_acc', accuracy, prog_bar=True)
         self.log("test_loss", test_loss)
