@@ -20,17 +20,18 @@ class ProteinQuantClassifier(pl.LightningModule):
         self.save_hyperparameters()
 
     def forward(self, x):
-        print(len(x))
-        print(type(x))
-        print(x[0].shape)
-        print(x[1].shape)
-        print("X's shape: {}".format(x.shape))
         x = self.model(x)
         # if isinstance(x, torch.Tensor):
         #     x = self.fc(x)
         if isinstance(x, InceptionOutputs):
             x = x[0]
         return x
+
+    def predict_step(self, batch, batch_idx, dataloader_idx: int = 0):
+        x, label = batch
+        print("X shape: {}".format(x.shape))
+        y_hat = self(x)
+        return y_hat
 
     def training_step(self, batch, batch_idx):
         x, original_labels = batch
