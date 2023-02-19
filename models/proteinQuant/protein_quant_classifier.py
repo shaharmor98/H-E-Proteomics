@@ -29,7 +29,6 @@ class ProteinQuantClassifier(pl.LightningModule):
 
     def predict_step(self, batch, batch_idx, dataloader_idx: int = 0):
         x, label = batch
-        print("X shape: {}".format(x.shape))
         y_hat = self(x)
         return y_hat
 
