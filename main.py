@@ -188,14 +188,11 @@ def inference(args):
         results[model_name] = {}
         print("Starting {}".format(model_name))
         for test_id in test_ids:
-            print("test_id: {}".format(test_id))
             dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
             # trainer = pl.Trainer()
             trainer = pl.Trainer(devices=1, accelerator="auto")
             predictions = trainer.predict(model,
                                           dataloaders=DataLoader(dataset, num_workers=int(multiprocessing.cpu_count())))
-            print(predictions)
-            print(type(predictions))
             total = np.sum(np.where(np.asarray(predictions) > 0.5, 1, 0), axis=0)
             ratio = total / dataset.get_num_of_files()
             results[model_name][test_id[0]] = ratio
