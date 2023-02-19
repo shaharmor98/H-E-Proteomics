@@ -22,7 +22,8 @@ class ProteinQuantClassifier(pl.LightningModule):
     def forward(self, x):
         print(len(x))
         print(type(x))
-        print(x)
+        print(x[0].shape)
+        print(x[1].shape)
         print("X's shape: {}".format(x.shape))
         x = self.model(x)
         # if isinstance(x, torch.Tensor):
