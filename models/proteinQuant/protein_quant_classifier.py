@@ -20,6 +20,8 @@ class ProteinQuantClassifier(pl.LightningModule):
         self.save_hyperparameters()
 
     def forward(self, x):
+        print(len(x))
+        print(type(x))
         print("X's shape: {}".format(x.shape))
         x = self.model(x)
         # if isinstance(x, torch.Tensor):
