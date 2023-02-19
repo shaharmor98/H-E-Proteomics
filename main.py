@@ -190,8 +190,8 @@ def inference(args):
         for test_id in test_ids:
             print("test_id: {}".format(test_id))
             dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
-            trainer = pl.Trainer()
-            # trainer = pl.Trainer(devices="auto", accelerator="auto")
+            # trainer = pl.Trainer()
+            trainer = pl.Trainer(devices="auto", accelerator="auto", strategy='ddp')
             predictions = trainer.predict(model,
                                           dataloaders=DataLoader(dataset, num_workers=int(multiprocessing.cpu_count())))
             print(predictions)
