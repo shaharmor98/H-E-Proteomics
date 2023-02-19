@@ -294,8 +294,11 @@ class LitImageClassifier(LightningModule):
 # the Trainer.                                                                              #
 # Finally, use `trainer.fit` to start the cross validation training.                        #
 #############################################################################################
+#
+# if __name__ == "__main__":
+#     main()
 
-if __name__ == "__main__":
+def main():
     seed_everything(42)
     model = LitImageClassifier()
     datamodule = MNISTKFoldDataModule()
