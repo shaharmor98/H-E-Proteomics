@@ -188,6 +188,7 @@ def inference(args):
         results[model_name] = {}
         print("Starting {}".format(model_name))
         for test_id in test_ids:
+            print("test_id: {}".format(test_id))
             dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
             trainer = pl.Trainer(devices="auto", accelerator="auto")
             predictions = trainer.predict(model,
