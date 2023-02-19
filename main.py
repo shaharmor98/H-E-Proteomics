@@ -166,7 +166,7 @@ def prepare_train_env():
 def inference(args):
 checkpoint_paths = [os.path.join(HostConfiguration.CHECKPOINTS_PATH, f"model.{f_idx + 1}.pt")
                     for f_idx in range(HostConfiguration.NUM_OF_FOLDS)]
-models = torch.nn.ModuleList([ProteinQuantClassifier.load_from_checkpoint(p) for p in checkpoint_paths])
+#models = torch.nn.ModuleList([ProteinQuantClassifier.load_from_checkpoint(p) for p in checkpoint_paths])
 tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
                                                            patch_size=HostConfiguration.PATCH_SIZE)
 transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
