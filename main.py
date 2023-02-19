@@ -92,7 +92,7 @@ def protein_quant_train(args):
                                       batch_size=16, num_workers=num_of_workers,
                                       test_proportion_size=test_proportion_size)
     trainer = pl.Trainer(max_epochs=100, devices="auto", accelerator="auto",
-                         num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
+                         num_sanity_val_steps=0, logger=wandb_logger,
                          default_root_dir=HostConfiguration.CHECKPOINTS_PATH)
     internal_fit_loop = trainer.fit_loop
 
