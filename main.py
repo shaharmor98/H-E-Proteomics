@@ -48,6 +48,7 @@ def init_argparse():
     parser.add_argument("-p", "--preprocess", action="store_true")
     parser.add_argument("--slides_directory", type=str)
     parser.add_argument("-t", "--train", action="store_true")
+    parser.add_argument("-f", "--fold", type=int)
     parser.add_argument("-device", type=str)
     parser.add_argument("-tiles_dir", type=str)
     parser.add_argument("-test_id", type=str)
@@ -66,6 +67,10 @@ def protein_quant_train(args):
     if device is None:
         print("Device must be provided")
         exit(1)
+
+    start_fold = args.fold
+    if start_fold is None:
+        start_fold = 0
 
     tiles_directory_path = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
                                                                     patch_size=HostConfiguration.PATCH_SIZE)
@@ -91,13 +96,14 @@ def protein_quant_train(args):
     datamodule = TilesKFoldDataModule(tiles_directory_path, transform_compose, dia_metadata, gene_slides_with_labels,
                                       batch_size=16, num_workers=num_of_workers,
                                       test_proportion_size=test_proportion_size)
+    # TODO- added strategy, added pin memory to dataloader
     trainer = pl.Trainer(max_epochs=5, devices="auto", accelerator="auto",
-                         num_sanity_val_steps=0, logger=wandb_logger,
+                         num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
                          default_root_dir=HostConfiguration.CHECKPOINTS_PATH)
     internal_fit_loop = trainer.fit_loop
 
     trainer.fit_loop = KFoldLoop(HostConfiguration.NUM_OF_FOLDS, export_path=HostConfiguration.CHECKPOINTS_PATH,
-                                 device=device)
+                                 device=device, current_fold=start_fold)
     trainer.fit_loop.connect(internal_fit_loop)
     trainer.fit(model, datamodule)
 

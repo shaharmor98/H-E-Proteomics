@@ -11,10 +11,10 @@ from models.proteinQuant.cross_validation.tiles_kfold_data_module import BaseKFo
 
 
 class KFoldLoop(Loop):
-    def __init__(self, num_folds, export_path, device):
+    def __init__(self, num_folds, export_path, device, current_fold=0):
         super().__init__()
         self.num_folds = num_folds
-        self.current_fold = 0
+        self.current_fold = current_fold
         self.export_path = export_path
         self.device = device
 

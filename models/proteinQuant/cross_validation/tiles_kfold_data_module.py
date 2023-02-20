@@ -61,15 +61,15 @@ class TilesKFoldDataModule(BaseKFoldDataModule):
 
     def train_dataloader(self):
         return DataLoader(self.train_fold, batch_size=self.batch_size, num_workers=self.num_workers,
-                          persistent_workers=True)
+                          persistent_workers=True, pin_memory=True)
 
     def val_dataloader(self):
         return DataLoader(self.val_fold, batch_size=self.batch_size, num_workers=self.num_workers,
-                          persistent_workers=True)
+                          persistent_workers=True, pin_memory=True)
 
     def test_dataloader(self):
         return DataLoader(TilesDataset(self.tiles_directory, self.transform, self.test_indices, caller="Test dataset"),
-                          num_workers=self.num_workers, persistent_workers=True)
+                          num_workers=self.num_workers, persistent_workers=True, pin_memory=True)
 
     def __post_init__(cls):
         super().__init__()

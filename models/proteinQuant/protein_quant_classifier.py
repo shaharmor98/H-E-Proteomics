@@ -41,8 +41,8 @@ class ProteinQuantClassifier(pl.LightningModule):
         loss = self.loss(y_hat.float(), original_labels)
         accuracy = self.accuracy(y_hat, original_labels)
 
-        self.log('train_loss', loss, prog_bar=True)
-        self.log('train_acc', accuracy, prog_bar=True)
+        self.log('train_loss', loss, prog_bar=True, sync_dist=True)
+        self.log('train_acc', accuracy, prog_bar=True, sync_dist=True)
         return {'loss': loss, 'acc': accuracy}
 
     def validation_step(self, batch, batch_idx):
@@ -55,8 +55,9 @@ class ProteinQuantClassifier(pl.LightningModule):
         val_loss = self.loss(y_hat.float(), original_labels)
         accuracy = self.accuracy(y_hat, original_labels)
 
-        self.log('val_loss', val_loss, prog_bar=True)
-        self.log('val_acc', accuracy, prog_bar=True)
+        # TODO - added sync_dist
+        self.log('val_loss', val_loss, prog_bar=True, sync_dist=True)
+        self.log('val_acc', accuracy, prog_bar=True, sync_dist=True)
         return {"loss": val_loss, "acc": accuracy}
 
     def validation_epoch_end(self, outputs):
@@ -66,7 +67,7 @@ class ProteinQuantClassifier(pl.LightningModule):
             losses.append(output["loss"].cpu())
 
         print("val_epoch_loss", np.asarray(losses).mean())
-        self.log("val_epoch_loss", np.asarray(losses).mean())
+        self.log("val_epoch_loss", np.asarray(losses).mean(), sync_dist=True)
 
     def test_step(self, batch, batch_idx):
         # this is the test loop
@@ -76,8 +77,8 @@ class ProteinQuantClassifier(pl.LightningModule):
         test_loss = self.loss(y_hat.float(), original_labels)
         accuracy = self.accuracy(y_hat, original_labels)
 
-        self.log('test_acc', accuracy, prog_bar=True)
-        self.log("test_loss", test_loss)
+        self.log('test_acc', accuracy, prog_bar=True, sync_dist=True)
+        self.log("test_loss", test_loss, sync_dist=True)
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
