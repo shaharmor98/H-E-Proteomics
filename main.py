@@ -171,29 +171,29 @@ def prepare_train_env():
 
 def inference(args):
     checkpoint_paths = [os.path.join(HostConfiguration.CHECKPOINTS_PATH, f"model.{f_idx + 1}.pt")
-                        # for f_idx in range(7)]
                         for f_idx in range(HostConfiguration.NUM_OF_FOLDS)]
+    models_paths = []
+    for ckpt in checkpoint_paths:
+        if os.path.exists(ckpt):
+            models_paths.append(ckpt)
     # models = [ProteinQuantClassifier.load_from_checkpoint(p) for p in checkpoint_paths]
     tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
                                                                patch_size=HostConfiguration.PATCH_SIZE)
     transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
                                             transforms.ToTensor(),
                                             transforms.Normalize(mean=[0.], std=[255.])])
-    trainer = pl.Trainer(devices="auto", accelerator="auto")
-
     # Note, those ids selected due to 42 random seed value
     test_ids = [('PD31111a', 1), ('PD31125a', 1), ('PD31059a', 1), ('PD36036a', 1), ('PD36051a', 1),
                 ('PD36019a', 0), ('PD36002a', 0), ('PD31058a', 0), ('PD36060a', 0), ('PD31098a', 0)]
 
     results = {}
-    for ckpt_path in checkpoint_paths:
+    for ckpt_path in models_paths:
         model = ProteinQuantClassifier.load_from_checkpoint(ckpt_path)
         model_name = os.path.basename(ckpt_path)
         results[model_name] = {}
         print("Starting {}".format(model_name))
         for test_id in test_ids:
             dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
-            # trainer = pl.Trainer()
             trainer = pl.Trainer(devices=1, accelerator="auto")
             predictions = trainer.predict(model,
                                           dataloaders=DataLoader(dataset, num_workers=int(multiprocessing.cpu_count())))
