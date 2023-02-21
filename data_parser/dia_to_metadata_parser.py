@@ -89,7 +89,19 @@ class DiaToMetadata(object):
             raise RuntimeError("WTF just happened with {}".format(gene_name))
 
         normalized_row = self.get_gene_normalized_protein_quant(gene_row)
-        return normalized_row
+        high_cols, low_cols, _, _ = self.get_upper_lower_percentage(normalized_row)
+
+        target_rnrs = [(record[record.find("_") + 1:], record) for record in high_cols.to_list() if
+                       record.startswith('ProteinQuant_')]
+        target_rnrs += [(record[record.find("_") + 1:], record) for record in low_cols.to_list() if
+                        record.startswith('ProteinQuant_')]
+
+        slide_ids = {}
+        for rnr, row_column in target_rnrs:
+            slide_id = list(filter(lambda x: rnrs[x] == rnr, rnrs))[0]
+            slide_ids[slide_id] = normalized_row[row_column].values[0]
+
+        return slide_ids
 
     def get_gene_slides_with_labels(self, gene_name):
         tnbc = self.get_tnbc_unique_df()

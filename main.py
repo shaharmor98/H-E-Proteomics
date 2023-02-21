@@ -221,13 +221,13 @@ def spearman_correlation_test(gene):
                                                                     patch_size=HostConfiguration.PATCH_SIZE)
     dia_metadata = DiaToMetadata(HostConfiguration.DIA_GENES_FILE_PATH, HostConfiguration.RNR_METADATA_FILE_PATH,
                                  tiles_directory_path)
-    row = dia_metadata.get_normalized_gene_records(gene_name=gene)
+    row, rnrs = dia_metadata.get_normalized_gene_records(gene_name=gene)
 
     with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), "r") as f:
         results = json.load(f)
         averages = {}
         for model in results.keys():
-            for sample, pred in results[model]:
+            for sample, pred in results[model].items():
                 if sample in averages:
                     averages[sample].append(pred)
                 else:
