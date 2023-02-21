@@ -46,6 +46,7 @@ def run(model):
 def init_argparse():
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--preprocess", action="store_true")
+    parser.add_argument("--gene", type=str)
     parser.add_argument("--slides_directory", type=str)
     parser.add_argument("-t", "--train", action="store_true")
     parser.add_argument("-f", "--fold", type=int)
@@ -62,7 +63,7 @@ def preprocess(args):
     preprocessor.start()
 
 
-def protein_quant_train(args):
+def protein_quant_train(args, gene):
     device = args.device
     if device is None:
         print("Device must be provided")
@@ -80,17 +81,17 @@ def protein_quant_train(args):
     wandb_logger = WandbLogger(project="proteomics-project", log_model=True)
     num_of_workers = int(multiprocessing.cpu_count())
 
-    print("Is going to use: {} workers".format(num_of_workers))
     dia_metadata = DiaToMetadata(HostConfiguration.DIA_GENES_FILE_PATH, HostConfiguration.RNR_METADATA_FILE_PATH,
                                  tiles_directory_path)
-    gene_slides_with_labels = dia_metadata.get_gene_slides_with_labels(HostConfiguration.CHOSEN_GENE)
+    gene_slides_with_labels = dia_metadata.get_gene_slides_with_labels(gene)
+    # gene_slides_with_labels = dia_metadata.get_gene_slides_with_labels(HostConfiguration.CHOSEN_GENE)
     transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
                                             transforms.ToTensor(),
                                             transforms.Normalize(mean=[0.], std=[255.])])
     test_proportion_size = 0.15
 
     train, test = dia_metadata.random_shuffle(gene_slides_with_labels, test_proportion_size)
-    with open(HostConfiguration.TEST_IDS_FILE, 'w') as f:
+    with open(HostConfiguration.TEST_IDS_FILE.format(gene=gene), 'w') as f:
         json.dump(test, f)
     print("Test: ", test)
 
@@ -101,10 +102,11 @@ def protein_quant_train(args):
     # TODO- added strategy, added pin memory to dataloader
     trainer = pl.Trainer(max_epochs=5, devices="auto", accelerator="auto",
                          num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
-                         default_root_dir=HostConfiguration.CHECKPOINTS_PATH)
+                         default_root_dir=HostConfiguration.CHECKPOINTS_PATH.format(gene=gene))
     internal_fit_loop = trainer.fit_loop
 
-    trainer.fit_loop = KFoldLoop(HostConfiguration.NUM_OF_FOLDS, export_path=HostConfiguration.CHECKPOINTS_PATH,
+    trainer.fit_loop = KFoldLoop(HostConfiguration.NUM_OF_FOLDS,
+                                 export_path=HostConfiguration.CHECKPOINTS_PATH.format(gene=gene),
                                  device=device, current_fold=start_fold)
     trainer.fit_loop.connect(internal_fit_loop)
     trainer.fit(model, datamodule)
@@ -166,13 +168,13 @@ def pam50_train(args):
 """
 
 
-def prepare_train_env():
-    if not os.path.exists(HostConfiguration.CHECKPOINTS_PATH):
-        os.makedirs(HostConfiguration.CHECKPOINTS_PATH)
+def prepare_train_env(gene):
+    if not os.path.exists(HostConfiguration.CHECKPOINTS_PATH.format(gene=gene)):
+        os.makedirs(HostConfiguration.CHECKPOINTS_PATH.format(gene=gene))
 
 
-def inference():
-    checkpoint_paths = [os.path.join(HostConfiguration.CHECKPOINTS_PATH, f"model.{f_idx + 1}.pt")
+def inference(gene):
+    checkpoint_paths = [os.path.join(HostConfiguration.CHECKPOINTS_PATH.format(gene=gene), f"model.{f_idx + 1}.pt")
                         for f_idx in range(HostConfiguration.NUM_OF_FOLDS)]
     models_paths = []
     for ckpt in checkpoint_paths:
@@ -184,11 +186,17 @@ def inference():
     transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
                                             transforms.ToTensor(),
                                             transforms.Normalize(mean=[0.], std=[255.])])
+
     # Note, those ids selected due to 42 random seed value - STAT1
     test_ids = [('PD31111a', 1), ('PD31125a', 1), ('PD31059a', 1), ('PD36036a', 1), ('PD36051a', 1),
                 ('PD36019a', 0), ('PD36002a', 0), ('PD31058a', 0), ('PD36060a', 0), ('PD31098a', 0)]
-    # HLA-C: Test:  {'PD31067a': 1, 'PD31122a': 1, 'PD35955a': 1, 'PD31170a': 1, 'PD36036a': 1,
-    # 'PD36019a': 0, 'PD36002a': 0, 'PD31088a': 0, 'PD36034a': 0, 'PD31107a': 0}
+
+    with open(HostConfiguration.TEST_IDS_FILE.format(gene=gene), 'r') as f:
+        ids = json.load(f)
+        test_ids = []
+        for k, v in ids.items():
+            test_ids.append((k, v))
+
     results = {}
     for ckpt_path in models_paths:
         model = ProteinQuantClassifier.load_from_checkpoint(ckpt_path)
@@ -204,95 +212,32 @@ def inference():
             ratio = total / dataset.get_num_of_files()
             results[model_name][test_id[0]] = ratio
             print("ID: {} got ratio of: {}".format(test_id, ratio))
-    with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE, "w") as f:
+    with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), "w") as f:
         json.dump(results, f)
 
 
-def spearman_correlation_test():
+def spearman_correlation_test(gene):
     tiles_directory_path = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
                                                                     patch_size=HostConfiguration.PATCH_SIZE)
     dia_metadata = DiaToMetadata(HostConfiguration.DIA_GENES_FILE_PATH, HostConfiguration.RNR_METADATA_FILE_PATH,
                                  tiles_directory_path)
-    row = dia_metadata.get_normalized_gene_records
+    row = dia_metadata.get_normalized_gene_records(gene_name=gene)
+
+    with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), "r") as f:
+        results = json.load(f)
+        averages = {}
+        for model in results.keys():
+            for sample, pred in results[model]:
+                if sample in averages:
+                    averages[sample].append(pred)
+                else:
+                    averages[sample] = [pred]
+        samples_average = {}
+        for k in averages.keys():
+            samples_average[k] = np.asarray(averages[k]).mean()
 
     # scipy.stats.spearmanr(pred, real2)
-    return row
-
-
-def old_inference(args):
-    # model = ProteinQuantClassifier.load_from_checkpoint(args.model_path)
-    # tiles_directory = args.tiles_dir
-
-    test_id = args.test_id
-    checkpoint_path = "/home/shaharmor98/checkpoints"
-    torch.set_grad_enabled(False)
-    models = [ProteinQuantClassifier.load_from_checkpoint(os.path.join(checkpoint_path, m)) for m in
-              os.listdir("/home/shaharmor98/checkpoints")]
-    for m in models:
-        m.eval()
-
-    print("Models loaded")
-    tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
-                                                               patch_size=HostConfiguration.PATCH_SIZE)
-    img_tiles = [t for t in os.listdir(tiles_directory) if t.startswith(test_id)]
-    tensors = []
-    transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
-                                            transforms.ToTensor(),
-                                            transforms.Normalize(mean=[0.], std=[255.])])
-    for t in img_tiles:
-        img = Image.open(os.path.join(tiles_directory, t))
-        img = transform_compose(img)
-        tensors.append(img)
-
-    tensors = torch.stack(tensors, dim=0)
-    print("Tensors shape: ", tensors.shape)
-    answers = []
-    for i, m in enumerate(models):
-        out = m.model(tensors).detach().numpy()
-        answers.append(np.sum(np.where(out > 0.5, 1, 0), axis=0)[0])
-        print("Model {} said: {}".format(i + 1, answers[i]))
-    print("Mean answer: ", np.asarray(answers).mean())
-    print("Mean ratio: ", int(np.asarray(answers).mean()) / len(tensors))
-
-    """ids = []
-    for i in ids:
-        print("Starting ", i)
-        img_tiles = [t for t in os.listdir(tiles_directory) if t.startswith(i)]
-        if len(img_tiles) == 0:
-            continue
-        tensors = []
-        transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
-                                                transforms.ToTensor(),
-                                                transforms.Normalize(mean=[0.], std=[255.])])
-
-        for t in img_tiles:
-            img = Image.open(os.path.join(tiles_directory, t))
-            img = transform_compose(img)
-            tensors.append(img)
-
-        tensors = torch.stack(tensors, dim=0)
-        out = model(tensors).detach().numpy()
-        confidence_threshold = 0.5
-        mask = out > confidence_threshold
-        indexes = np.where(mask.any(axis=1), np.argmax(mask, axis=1), -1)
-
-        splits = torch.tensor_split(tensors, len(tensors) // 50)
-        partial_voted = []
-        for split in splits:
-            # batch = torch.stack(split, dim=0)
-            out = model(split)
-            out = softmax(out).detach().numpy()
-
-            confidence_threshold = 0.75
-            mask = out > confidence_threshold
-            indexes = np.where(mask.any(axis=1), np.argmax(mask, axis=1), -1)
-            tiles_values = indexes[np.where(indexes != -1)[0]]
-            most_voted_tile = np.argmax(np.bincount(tiles_values.astype(int)))
-            partial_voted.append(most_voted_tile)
-        most_voted_tile = np.asarray(partial_voted)
-        most_voted_tile = np.argmax(np.bincount(most_voted_tile.astype(int)))
-        print("Id: {} got: {}".format(i, most_voted_tile))
-        """
+    return samples_average, row
 
 
 def main():
@@ -303,10 +248,11 @@ def main():
         preprocess(args)
     elif args.train:
         seed_everything(HostConfiguration.SEED)
-        prepare_train_env()
-        protein_quant_train(args)
+        for gene in HostConfiguration.GENES:
+            prepare_train_env(gene)
+            protein_quant_train(args, gene)
     elif args.inference:
-        inference()
+        inference(args.gene)
 
 
 if __name__ == '__main__':

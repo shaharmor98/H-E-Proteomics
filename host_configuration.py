@@ -16,7 +16,8 @@ class HostConfiguration(object):
     CHOSEN_GENE = "STAT1"
     # CHOSEN_GENE = "HLA-C"
     # CHOSEN_GENE = "NFKB2"
-    CHECKPOINTS_PATH = os.path.join(os.path.expanduser("~"), "checkpoints", CHOSEN_GENE)
+    GENES = ["NFKB2"]
+    CHECKPOINTS_PATH = os.path.join(os.path.expanduser("~"), "checkpoints", "{gene}")
     PREDICTIONS_SUMMARY_FILE = os.path.join(CHECKPOINTS_PATH, "predictions.txt")
     TEST_IDS_FILE = os.path.join(CHECKPOINTS_PATH, "test_ids.txt")
     NUM_OF_FOLDS = 10
