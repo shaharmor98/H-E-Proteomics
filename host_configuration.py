@@ -13,8 +13,8 @@ class HostConfiguration(object):
     PATCH_SIZE = 512
     ZOOM_LEVEL = 20
     SEED = 42
-    # CHOSEN_GENE = "STAT1"
-    CHOSEN_GENE = "HLA-C"
+    CHOSEN_GENE = "STAT1"
+    # CHOSEN_GENE = "HLA-C"
     # CHOSEN_GENE = "NFKB2"
     CHECKPOINTS_PATH = os.path.join(os.path.expanduser("~"), "checkpoints", CHOSEN_GENE)
     PREDICTIONS_SUMMARY_FILE = os.path.join(CHECKPOINTS_PATH, "predictions.txt")
