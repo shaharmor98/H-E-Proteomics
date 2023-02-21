@@ -221,7 +221,7 @@ def spearman_correlation_test(gene):
                                                                     patch_size=HostConfiguration.PATCH_SIZE)
     dia_metadata = DiaToMetadata(HostConfiguration.DIA_GENES_FILE_PATH, HostConfiguration.RNR_METADATA_FILE_PATH,
                                  tiles_directory_path)
-    row, rnrs = dia_metadata.get_normalized_gene_records(gene_name=gene)
+    normalized_records = dia_metadata.get_normalized_gene_records(gene_name=gene)
 
     with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), "r") as f:
         results = json.load(f)
@@ -237,7 +237,7 @@ def spearman_correlation_test(gene):
             samples_average[k] = np.asarray(averages[k]).mean()
 
     # scipy.stats.spearmanr(pred, real2)
-    return samples_average, row
+    return samples_average, normalized_records
 
 
 def main():
