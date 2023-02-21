@@ -53,16 +53,13 @@ class ProteinQuantClassifier(pl.LightningModule):
         val_loss = self.loss(y_hat.float(), original_labels)
         accuracy = self.accuracy(y_hat, original_labels)
 
-        # TODO - added sync_dist
         return {"loss": val_loss, "acc": accuracy}
 
     def validation_epoch_end(self, outputs):
         losses = []
-        print("Found: {} objects".format(len(outputs)))
         for output in outputs:
             losses.append(output["loss"].cpu())
 
-        print("val_epoch_loss", np.asarray(losses).mean())
         self.log("val_epoch_loss", np.asarray(losses).mean(), sync_dist=True)
 
     def test_step(self, batch, batch_idx):

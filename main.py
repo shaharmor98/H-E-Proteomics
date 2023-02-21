@@ -90,6 +90,8 @@ def protein_quant_train(args):
     test_proportion_size = 0.15
 
     train, test = dia_metadata.random_shuffle(gene_slides_with_labels, test_proportion_size)
+    with open(HostConfiguration.TEST_IDS_FILE, 'w') as f:
+        json.dump(test, f)
     print("Test: ", test)
 
     model = ProteinQuantClassifier(device).to(device)
@@ -169,7 +171,7 @@ def prepare_train_env():
         os.makedirs(HostConfiguration.CHECKPOINTS_PATH)
 
 
-def inference(args):
+def inference():
     checkpoint_paths = [os.path.join(HostConfiguration.CHECKPOINTS_PATH, f"model.{f_idx + 1}.pt")
                         for f_idx in range(HostConfiguration.NUM_OF_FOLDS)]
     models_paths = []
@@ -182,10 +184,11 @@ def inference(args):
     transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
                                             transforms.ToTensor(),
                                             transforms.Normalize(mean=[0.], std=[255.])])
-    # Note, those ids selected due to 42 random seed value
+    # Note, those ids selected due to 42 random seed value - STAT1
     test_ids = [('PD31111a', 1), ('PD31125a', 1), ('PD31059a', 1), ('PD36036a', 1), ('PD36051a', 1),
                 ('PD36019a', 0), ('PD36002a', 0), ('PD31058a', 0), ('PD36060a', 0), ('PD31098a', 0)]
-
+    # HLA-C: Test:  {'PD31067a': 1, 'PD31122a': 1, 'PD35955a': 1, 'PD31170a': 1, 'PD36036a': 1,
+    # 'PD36019a': 0, 'PD36002a': 0, 'PD31088a': 0, 'PD36034a': 0, 'PD31107a': 0}
     results = {}
     for ckpt_path in models_paths:
         model = ProteinQuantClassifier.load_from_checkpoint(ckpt_path)
@@ -303,7 +306,7 @@ def main():
         prepare_train_env()
         protein_quant_train(args)
     elif args.inference:
-        inference(args)
+        inference()
 
 
 if __name__ == '__main__':
