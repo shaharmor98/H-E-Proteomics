@@ -236,7 +236,14 @@ def spearman_correlation_test(gene):
         for k in averages.keys():
             samples_average[k] = np.asarray(averages[k]).mean()
 
-    # scipy.stats.spearmanr(pred, real2)
+    prediction = []
+    real = []
+    for k in samples_average:
+        prediction.append(samples_average[k])
+        real.append(normalized_records[k])
+
+    print("Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(prediction, real)))
+    # SpearmanResult(correlation=0.8787878787878788, pvalue=0.0008138621117322101)
     return samples_average, normalized_records
 
 
