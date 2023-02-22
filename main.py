@@ -229,6 +229,7 @@ def analysis(gene):
     B_results = []
     C_results = []
     D_results = []
+    E_results = []
 
     with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), 'r') as f:
         predictions = json.load(f)
@@ -283,7 +284,6 @@ def analysis(gene):
         C_results.append(ratio)
 
     # Method D- calculate distribution of results, take the first 8 values around the mean
-
     for test_id in test_ids:
         pred = predictions[test_id[0]]
         pred = np.asarray(pred)
@@ -303,14 +303,25 @@ def analysis(gene):
         ratio = total / dataset.get_num_of_files()
         D_results.append(ratio)
 
+    # Method E- averaging model's level
+    for test_id in test_ids:
+        pred = predictions[test_id[0]]
+        dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
+        model_sum = np.sum(np.where(pred > 0.5, 1, 0), axis=1)
+        total = int(np.mean(model_sum))
+        ratio = total / dataset.get_num_of_files()
+        E_results.append(ratio)
+
     print("A: ", A_results)
     print("B: ", B_results)
     print("C: ", C_results)
     print("D: ", D_results)
+    print("E: ", E_results)
     print("Method A: Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(A_results, actual_prediction)))
     print("Method B: Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(B_results, actual_prediction)))
     print("Method C: Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(C_results, actual_prediction)))
     print("Method D: Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(D_results, actual_prediction)))
+    print("Method E: Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(E_results, actual_prediction)))
 
 
 def spearman_correlation_test(gene):
