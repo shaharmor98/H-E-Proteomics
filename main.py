@@ -208,7 +208,7 @@ def inference(gene):
                                           dataloaders=DataLoader(dataset, num_workers=int(multiprocessing.cpu_count())))
             predictions = [p.item() for p in predictions]
             results[test_id[0]].append(predictions)
-            
+
     with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), "w") as f:
         json.dump(results, f)
 
@@ -244,8 +244,8 @@ def analysis(gene):
         actual_prediction.append(normalized_records[slide_id])
 
     # Method A- averaging tile level
-    for test_id, _ in test_ids:
-        pred = predictions[test_id]
+    for test_id in test_ids:
+        pred = predictions[test_id[0]]
         dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
         averaged_tile = np.mean(pred, axis=0)
         total = np.sum(np.where(np.asarray(averaged_tile) > 0.5, 1, 0), axis=0)
@@ -253,8 +253,8 @@ def analysis(gene):
         A_results.append(ratio)
 
     # Method B- applying threshold and then classify by majority
-    for test_id, _ in test_ids:
-        pred = predictions[test_id]
+    for test_id in test_ids:
+        pred = predictions[test_id[0]]
         dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
         threshold_predictions = np.where(np.asarray(pred) > 0.5, 1, 0)
         averaged_tile = np.mean(threshold_predictions, axis=0)
@@ -263,8 +263,8 @@ def analysis(gene):
         B_results.append(ratio)
 
     # Method C- calculate distribution of results, take the first 5 values around the mean
-    for test_id, _ in test_ids:
-        pred = predictions[test_id]
+    for test_id in test_ids:
+        pred = predictions[test_id[0]]
         results = np.zeros((pred.shape[1]))
         dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
         for i in range(pred.shape[1]):
@@ -283,8 +283,8 @@ def analysis(gene):
 
     # Method D- calculate distribution of results, take the first 8 values around the mean
 
-    for test_id, _ in test_ids:
-        pred = predictions[test_id]
+    for test_id in test_ids:
+        pred = predictions[test_id[0]]
         results = np.zeros((pred.shape[1]))
         dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
         for i in range(pred.shape[1]):
