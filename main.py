@@ -208,9 +208,7 @@ def inference(gene):
                                           dataloaders=DataLoader(dataset, num_workers=int(multiprocessing.cpu_count())))
             predictions = [p.item() for p in predictions]
             results[test_id[0]].append(predictions)
-            break
-        break
-
+            
     with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), "w") as f:
         json.dump(results, f)
 
