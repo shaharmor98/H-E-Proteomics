@@ -324,6 +324,7 @@ def analysis(gene):
     print("Method D: Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(D_results, actual_prediction)))
     print("Method E: Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(E_results, actual_prediction)))
 
+
 """
 Method A: Spearman correlation for NFKB2: SpearmanrResult(correlation=-0.07878787878787878, pvalue=0.8287173946974606)
 Method B: Spearman correlation for NFKB2: SpearmanrResult(correlation=-0.07878787878787878, pvalue=0.8287173946974606)
@@ -331,8 +332,16 @@ Method C: Spearman correlation for NFKB2: SpearmanrResult(correlation=-0.0787878
 Method D: Spearman correlation for NFKB2: SpearmanrResult(correlation=-0.07878787878787878, pvalue=0.8287173946974606)
 Method E: Spearman correlation for NFKB2: SpearmanrResult(correlation=-0.07878787878787878, pvalue=0.8287173946974606)
 
+Method A: Spearman correlation for EIF2B3: SpearmanrResult(correlation=0.24848484848484845, pvalue=0.48877630451924314)
+Method B: Spearman correlation for EIF2B3: SpearmanrResult(correlation=0.24848484848484845, pvalue=0.48877630451924314)
+Method C: Spearman correlation for EIF2B3: SpearmanrResult(correlation=0.24848484848484845, pvalue=0.48877630451924314)
+Method D: Spearman correlation for EIF2B3: SpearmanrResult(correlation=0.24848484848484845, pvalue=0.48877630451924314)
+Method E: Spearman correlation for EIF2B3: SpearmanrResult(correlation=0.17575757575757575, pvalue=0.6271883447764844)
+
 
 """
+
+
 def spearman_correlation_test(gene):
     tiles_directory_path = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
                                                                     patch_size=HostConfiguration.PATCH_SIZE)
@@ -378,6 +387,8 @@ def main():
         for gene in HostConfiguration.GENES:
             prepare_train_env(gene)
             protein_quant_train(args, gene)
+            inference(gene)
+
     elif args.inference:
         inference(args.gene)
     elif args.analysis:
