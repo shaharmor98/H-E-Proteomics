@@ -305,7 +305,7 @@ def analysis(gene):
 
     # Method E- averaging model's level
     for test_id in test_ids:
-        pred = predictions[test_id[0]]
+        pred = np.asarray(predictions[test_id[0]])
         dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
         model_sum = np.sum(np.where(pred > 0.5, 1, 0), axis=1)
         total = int(np.mean(model_sum))
