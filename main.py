@@ -250,6 +250,7 @@ def analysis(gene):
         averaged_tile = np.mean(pred, axis=0)
         total = np.sum(np.where(np.asarray(averaged_tile) > 0.5, 1, 0), axis=0)
         ratio = total / dataset.get_num_of_files()
+        print("Method A: {}: ratio: {}".format(test_id[0], ratio))
         A_results.append(ratio)
 
     # Method B- applying threshold and then classify by majority
@@ -260,6 +261,7 @@ def analysis(gene):
         averaged_tile = np.mean(threshold_predictions, axis=0)
         total = np.sum(np.where(np.asarray(averaged_tile) > 0.5, 1, 0), axis=0)
         ratio = total / dataset.get_num_of_files()
+        print("Method B: {}: ratio: {}".format(test_id[0], ratio))
         B_results.append(ratio)
 
     # Method C- calculate distribution of results, take the first 5 values around the mean
@@ -280,6 +282,7 @@ def analysis(gene):
 
         total = np.sum(np.where(np.asarray(results) > 0.5, 1, 0), axis=0)
         ratio = total / dataset.get_num_of_files()
+        print("Method C: {}: ratio: {}".format(test_id[0], ratio))
         C_results.append(ratio)
 
     # Method D- calculate distribution of results, take the first 8 values around the mean
@@ -301,6 +304,7 @@ def analysis(gene):
 
         total = np.sum(np.where(np.asarray(results) > 0.5, 1, 0), axis=0)
         ratio = total / dataset.get_num_of_files()
+        print("Method D: {}: ratio: {}".format(test_id[0], ratio))
         D_results.append(ratio)
 
     print("Method A: Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(A_results, actual_prediction)))
