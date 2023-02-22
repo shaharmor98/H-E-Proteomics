@@ -265,6 +265,7 @@ def analysis(gene):
     # Method C- calculate distribution of results, take the first 5 values around the mean
     for test_id in test_ids:
         pred = predictions[test_id[0]]
+        pred = np.asarray(pred)
         results = np.zeros((pred.shape[1]))
         dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
         for i in range(pred.shape[1]):
@@ -285,6 +286,7 @@ def analysis(gene):
 
     for test_id in test_ids:
         pred = predictions[test_id[0]]
+        pred = np.asarray(pred)
         results = np.zeros((pred.shape[1]))
         dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
         for i in range(pred.shape[1]):
