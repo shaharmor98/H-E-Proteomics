@@ -211,6 +211,8 @@ def inference(gene):
             print(type(predictions))
             print(type(results))
             print(type(results[test_id[0]]))
+            break
+        break
 
     with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), "w") as f:
         json.dump(results, f)
