@@ -208,7 +208,9 @@ def inference(gene):
                                           dataloaders=DataLoader(dataset, num_workers=int(multiprocessing.cpu_count())))
             results[test_id[0]].append(predictions)
             print("Predictions type: {}".format(type(predictions)))
-            print("Predictions len: {}".format(type(predictions)))
+            predictions = np.asarray(predictions)
+            print("Predictions type: {}".format(type(predictions)))
+            print("Predictions shape: {}".format(predictions.shape))
             exit(1)
             # results[model_name][test_id[0]] = predictions
     with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), "w") as f:
