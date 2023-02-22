@@ -206,17 +206,8 @@ def inference(gene):
             trainer = pl.Trainer(devices=1, accelerator="auto")
             predictions = trainer.predict(model,
                                           dataloaders=DataLoader(dataset, num_workers=int(multiprocessing.cpu_count())))
+            predictions = [p.item() for p in predictions]
             results[test_id[0]].append(predictions)
-            print(type(test_id[0]))
-            print(type(predictions))
-            print(type(predictions[0]))
-            print(predictions[0])
-            print(predictions[0].item())
-            print(type(predictions[0].item()))
-            print(type(results))
-            print(type(results[test_id[0]]))
-            break
-        break
 
     with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), "w") as f:
         json.dump(results, f)
