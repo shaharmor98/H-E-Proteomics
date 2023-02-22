@@ -210,6 +210,9 @@ def inference(gene):
             print(type(test_id[0]))
             print(type(predictions))
             print(type(predictions[0]))
+            print(predictions[0])
+            print(predictions[0].item())
+            print(type(predictions[0].item()))
             print(type(results))
             print(type(results[test_id[0]]))
             break
