@@ -186,10 +186,6 @@ def inference(gene):
                                             transforms.ToTensor(),
                                             transforms.Normalize(mean=[0.], std=[255.])])
 
-    # Note, those ids selected due to 42 random seed value - STAT1
-    test_ids = [('PD31111a', 1), ('PD31125a', 1), ('PD31059a', 1), ('PD36036a', 1), ('PD36051a', 1),
-                ('PD36019a', 0), ('PD36002a', 0), ('PD31058a', 0), ('PD36060a', 0), ('PD31098a', 0)]
-
     with open(HostConfiguration.TEST_IDS_FILE.format(gene=gene), 'r') as f:
         ids = json.load(f)
         test_ids = []
@@ -200,19 +196,116 @@ def inference(gene):
     for ckpt_path in models_paths:
         model = ProteinQuantClassifier.load_from_checkpoint(ckpt_path)
         model_name = os.path.basename(ckpt_path)
-        results[model_name] = {}
+        # results[model_name] = {}
         print("Starting {}".format(model_name))
         for test_id in test_ids:
+            if not test_id[0] in results:
+                results[test_id[0]] = []
+            print("Starting test_id: ", test_id)
             dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
             trainer = pl.Trainer(devices=1, accelerator="auto")
             predictions = trainer.predict(model,
                                           dataloaders=DataLoader(dataset, num_workers=int(multiprocessing.cpu_count())))
-            total = np.sum(np.where(np.asarray(predictions) > 0.5, 1, 0), axis=0)
-            ratio = total / dataset.get_num_of_files()
-            results[model_name][test_id[0]] = ratio
-            print("ID: {} got ratio of: {}".format(test_id, ratio))
+            results[test_id[0]].append(predictions)
+            print("Predictions type: {}".format(type(predictions)))
+            print("Predictions len: {}".format(type(predictions)))
+            exit(1)
+            # results[model_name][test_id[0]] = predictions
     with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), "w") as f:
         json.dump(results, f)
+
+
+def analysis(predictions, gene):
+    """
+    Input- dictionary including: keys = slides ids. value- (num_of_models, H, W) of predictions
+    """
+    tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
+                                                               patch_size=HostConfiguration.PATCH_SIZE)
+    transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
+                                            transforms.ToTensor(),
+                                            transforms.Normalize(mean=[0.], std=[255.])])
+    dia_metadata = DiaToMetadata(HostConfiguration.DIA_GENES_FILE_PATH, HostConfiguration.RNR_METADATA_FILE_PATH,
+                                 tiles_directory)
+    normalized_records = dia_metadata.get_normalized_gene_records(gene_name=gene)
+    A_results = []
+    B_results = []
+    C_results = []
+    D_results = []
+
+    with open(HostConfiguration.TEST_IDS_FILE.format(gene=gene), 'r') as f:
+        ids = json.load(f)
+        test_ids = []
+        for k, v in ids.items():
+            test_ids.append((k, v))
+
+    actual_prediction = []
+    for slide_id, _ in test_ids:
+        actual_prediction.append(normalized_records[slide_id])
+
+    # Method A- averaging tile level
+    for test_id, _ in test_ids:
+        pred = predictions[test_id]
+        dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
+        averaged_tile = np.mean(pred, axis=0)
+        total = np.sum(np.where(np.asarray(averaged_tile) > 0.5, 1, 0), axis=0)
+        ratio = total / dataset.get_num_of_files()
+        A_results.append(ratio)
+
+    # Method B- applying threshold and then classify by majority
+    for test_id, _ in test_ids:
+        pred = predictions[test_id]
+        dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
+        threshold_predictions = np.where(np.asarray(pred) > 0.5, 1, 0)
+        averaged_tile = np.mean(threshold_predictions, axis=0)
+        total = np.sum(np.where(np.asarray(averaged_tile) > 0.5, 1, 0), axis=0)
+        ratio = total / dataset.get_num_of_files()
+        B_results.append(ratio)
+
+    # Method C- calculate distribution of results, take the first 5 values around the mean
+    for test_id, _ in test_ids:
+        pred = predictions[test_id]
+        results = np.zeros((pred.shape[1], pred.shape[2]))
+        dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
+        for i in range(pred.shape[1]):
+            for j in range(pred.shape[2]):
+                # Compute the mean of all values in the (i,j) index across the batches.
+                mean_val = np.mean(pred[:, i, j])
+
+                # Obtain the indices of the sorted values for that index across the batches
+                sorted_indices = np.argsort(np.abs(pred[:, i, j] - mean_val))
+
+                # Take the 5 values centered around the mean
+                results[i, j] = np.mean(pred[sorted_indices[:5], i, j])
+
+        total = np.sum(np.where(np.asarray(results) > 0.5, 1, 0), axis=0)
+        ratio = total / dataset.get_num_of_files()
+        C_results.append(ratio)
+
+    # Method D- calculate distribution of results, take the first 8 values around the mean
+
+    for test_id, _ in test_ids:
+        pred = predictions[test_id]
+        results = np.zeros((pred.shape[1], pred.shape[2]))
+        dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
+        for i in range(pred.shape[1]):
+            for j in range(pred.shape[2]):
+                # Compute the mean of all values in the (i,j) index across the batches.
+                mean_val = np.mean(pred[:, i, j])
+
+                # Obtain the indices of the sorted values for that index across the batches
+                sorted_indices = np.argsort(np.abs(pred[:, i, j] - mean_val))
+
+                # Take the 8 values centered around the mean
+                results[i, j] = np.mean(pred[sorted_indices[:8], i, j])
+
+        total = np.sum(np.where(np.asarray(results) > 0.5, 1, 0), axis=0)
+        ratio = total / dataset.get_num_of_files()
+        D_results.append(ratio)
+
+    print("Method A: Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(A_results, actual_prediction)))
+    print("Method B: Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(B_results, actual_prediction)))
+    print("Method C: Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(C_results, actual_prediction)))
+    print("Method D: Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(D_results, actual_prediction)))
 
 
 def spearman_correlation_test(gene):
@@ -245,8 +338,6 @@ def spearman_correlation_test(gene):
 
     # Spearman correlation for STAT1: SpearmanResult(correlation=0.8787878787878788, pvalue=0.0008138621117322101)
     # Spearman correlation for HLA-C: SpearmanrResult(correlation=0.7212121212121211, pvalue=0.018573155089460208)
-
-
 
     return samples_average, normalized_records
 
