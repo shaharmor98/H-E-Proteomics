@@ -53,6 +53,7 @@ def init_argparse():
     parser.add_argument("-device", type=str)
     parser.add_argument("-tiles_dir", type=str)
     parser.add_argument("-test_id", type=str)
+    parser.add_argument("--analysis", action="store_true")
     parser.add_argument("-i", "--inference", action="store_true")
     return parser
 
@@ -209,12 +210,12 @@ def inference(gene):
             results[test_id[0]].append(predictions)
     for k in results.keys():
         results[k] = np.asarray(results[k])
-        
+
     with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), "w") as f:
         json.dump(results, f)
 
 
-def analysis(predictions, gene):
+def analysis(gene):
     """
     Input- dictionary including: keys = slides ids. value- (num_of_models, H, W) of predictions
     """
@@ -230,6 +231,9 @@ def analysis(predictions, gene):
     B_results = []
     C_results = []
     D_results = []
+
+    with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), 'r') as f:
+        predictions = json.load(f)
 
     with open(HostConfiguration.TEST_IDS_FILE.format(gene=gene), 'r') as f:
         ids = json.load(f)
@@ -352,6 +356,8 @@ def main():
             protein_quant_train(args, gene)
     elif args.inference:
         inference(args.gene)
+    elif args.analysis:
+        analysis(args.gene)
 
 
 if __name__ == '__main__':
