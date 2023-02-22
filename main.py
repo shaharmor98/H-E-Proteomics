@@ -317,13 +317,22 @@ def analysis(gene):
     print("C: ", C_results)
     print("D: ", D_results)
     print("E: ", E_results)
+    print("Actual prediction: ", actual_prediction)
     print("Method A: Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(A_results, actual_prediction)))
     print("Method B: Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(B_results, actual_prediction)))
     print("Method C: Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(C_results, actual_prediction)))
     print("Method D: Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(D_results, actual_prediction)))
     print("Method E: Spearman correlation for {}: {}".format(gene, scipy.stats.spearmanr(E_results, actual_prediction)))
 
+"""
+Method A: Spearman correlation for NFKB2: SpearmanrResult(correlation=-0.07878787878787878, pvalue=0.8287173946974606)
+Method B: Spearman correlation for NFKB2: SpearmanrResult(correlation=-0.07878787878787878, pvalue=0.8287173946974606)
+Method C: Spearman correlation for NFKB2: SpearmanrResult(correlation=-0.07878787878787878, pvalue=0.8287173946974606)
+Method D: Spearman correlation for NFKB2: SpearmanrResult(correlation=-0.07878787878787878, pvalue=0.8287173946974606)
+Method E: Spearman correlation for NFKB2: SpearmanrResult(correlation=-0.07878787878787878, pvalue=0.8287173946974606)
 
+
+"""
 def spearman_correlation_test(gene):
     tiles_directory_path = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
                                                                     patch_size=HostConfiguration.PATCH_SIZE)
