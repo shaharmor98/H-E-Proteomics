@@ -206,10 +206,7 @@ def inference(gene):
             trainer = pl.Trainer(devices=1, accelerator="auto")
             predictions = trainer.predict(model,
                                           dataloaders=DataLoader(dataset, num_workers=int(multiprocessing.cpu_count())))
-            predictions = np.asarray(predictions)
             results[test_id[0]].append(predictions)
-    for k in results.keys():
-        results[k] = np.asarray(results[k])
 
     with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), "w") as f:
         json.dump(results, f)
