@@ -338,7 +338,11 @@ Method C: Spearman correlation for EIF2B3: SpearmanrResult(correlation=0.2484848
 Method D: Spearman correlation for EIF2B3: SpearmanrResult(correlation=0.24848484848484845, pvalue=0.48877630451924314)
 Method E: Spearman correlation for EIF2B3: SpearmanrResult(correlation=0.17575757575757575, pvalue=0.6271883447764844)
 
-
+Method A: Spearman correlation for HLA-C: SpearmanrResult(correlation=0.7333333333333332, pvalue=0.01580059625057158)
+Method B: Spearman correlation for HLA-C: SpearmanrResult(correlation=0.6606060606060605, pvalue=0.03758837757140939)
+Method C: Spearman correlation for HLA-C: SpearmanrResult(correlation=0.7333333333333332, pvalue=0.01580059625057158)
+Method D: Spearman correlation for HLA-C: SpearmanrResult(correlation=0.6606060606060605, pvalue=0.03758837757140939)
+Method E: Spearman correlation for HLA-C: SpearmanrResult(correlation=0.7212121212121211, pvalue=0.018573155089460208)
 """
 
 
