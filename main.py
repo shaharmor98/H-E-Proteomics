@@ -196,7 +196,6 @@ def inference(gene):
     for ckpt_path in models_paths:
         model = ProteinQuantClassifier.load_from_checkpoint(ckpt_path)
         model_name = os.path.basename(ckpt_path)
-        # results[model_name] = {}
         print("Starting {}".format(model_name))
         for test_id in test_ids:
             if not test_id[0] in results:
@@ -206,13 +205,11 @@ def inference(gene):
             trainer = pl.Trainer(devices=1, accelerator="auto")
             predictions = trainer.predict(model,
                                           dataloaders=DataLoader(dataset, num_workers=int(multiprocessing.cpu_count())))
-            results[test_id[0]].append(predictions)
-            print("Predictions type: {}".format(type(predictions)))
             predictions = np.asarray(predictions)
-            print("Predictions type: {}".format(type(predictions)))
-            print("Predictions shape: {}".format(predictions.shape))
-            exit(1)
-            # results[model_name][test_id[0]] = predictions
+            results[test_id[0]].append(predictions)
+    for k in results.keys():
+        results[k] = np.asarray(results[k])
+        
     with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), "w") as f:
         json.dump(results, f)
 
@@ -266,18 +263,17 @@ def analysis(predictions, gene):
     # Method C- calculate distribution of results, take the first 5 values around the mean
     for test_id, _ in test_ids:
         pred = predictions[test_id]
-        results = np.zeros((pred.shape[1], pred.shape[2]))
+        results = np.zeros((pred.shape[1]))
         dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
         for i in range(pred.shape[1]):
-            for j in range(pred.shape[2]):
-                # Compute the mean of all values in the (i,j) index across the batches.
-                mean_val = np.mean(pred[:, i, j])
+            # Compute the mean of all values in the (i,j) index across the batches.
+            mean_val = np.mean(pred[:, i])
 
-                # Obtain the indices of the sorted values for that index across the batches
-                sorted_indices = np.argsort(np.abs(pred[:, i, j] - mean_val))
+            # Obtain the indices of the sorted values for that index across the batches
+            sorted_indices = np.argsort(np.abs(pred[:, i] - mean_val))
 
-                # Take the 5 values centered around the mean
-                results[i, j] = np.mean(pred[sorted_indices[:5], i, j])
+            # Take the 5 values centered around the mean
+            results[i] = np.mean(pred[sorted_indices[:5], i])
 
         total = np.sum(np.where(np.asarray(results) > 0.5, 1, 0), axis=0)
         ratio = total / dataset.get_num_of_files()
@@ -287,18 +283,17 @@ def analysis(predictions, gene):
 
     for test_id, _ in test_ids:
         pred = predictions[test_id]
-        results = np.zeros((pred.shape[1], pred.shape[2]))
+        results = np.zeros((pred.shape[1]))
         dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
         for i in range(pred.shape[1]):
-            for j in range(pred.shape[2]):
-                # Compute the mean of all values in the (i,j) index across the batches.
-                mean_val = np.mean(pred[:, i, j])
+            # Compute the mean of all values in the (i,j) index across the batches.
+            mean_val = np.mean(pred[:, i])
 
-                # Obtain the indices of the sorted values for that index across the batches
-                sorted_indices = np.argsort(np.abs(pred[:, i, j] - mean_val))
+            # Obtain the indices of the sorted values for that index across the batches
+            sorted_indices = np.argsort(np.abs(pred[:, i] - mean_val))
 
-                # Take the 8 values centered around the mean
-                results[i, j] = np.mean(pred[sorted_indices[:8], i, j])
+            # Take the 8 values centered around the mean
+            results[i] = np.mean(pred[sorted_indices[:8], i])
 
         total = np.sum(np.where(np.asarray(results) > 0.5, 1, 0), axis=0)
         ratio = total / dataset.get_num_of_files()
