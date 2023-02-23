@@ -391,7 +391,6 @@ def main():
         for gene in HostConfiguration.GENES:
             prepare_train_env(gene)
             protein_quant_train(args, gene)
-            inference(gene)
 
     elif args.inference:
         inference(args.gene)
