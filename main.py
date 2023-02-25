@@ -343,6 +343,24 @@ Method B: Spearman correlation for HLA-C: SpearmanrResult(correlation=0.66060606
 Method C: Spearman correlation for HLA-C: SpearmanrResult(correlation=0.7333333333333332, pvalue=0.01580059625057158)
 Method D: Spearman correlation for HLA-C: SpearmanrResult(correlation=0.6606060606060605, pvalue=0.03758837757140939)
 Method E: Spearman correlation for HLA-C: SpearmanrResult(correlation=0.7212121212121211, pvalue=0.018573155089460208)
+
+Method A: Spearman correlation for STAT1: SpearmanrResult(correlation=0.8666666666666665, pvalue=0.0011735381801554687)
+Method B: Spearman correlation for STAT1: SpearmanrResult(correlation=0.8666666666666665, pvalue=0.0011735381801554687)
+Method C: Spearman correlation for STAT1: SpearmanrResult(correlation=0.8666666666666665, pvalue=0.0011735381801554687)
+Method D: Spearman correlation for STAT1: SpearmanrResult(correlation=0.8666666666666665, pvalue=0.0011735381801554687)
+Method E: Spearman correlation for STAT1: SpearmanrResult(correlation=0.8303030303030302, pvalue=0.0029402270232795065)
+
+Method A: Spearman correlation for CC2D1A: SpearmanrResult(correlation=0.23636363636363633, pvalue=0.5108853175152002)
+Method B: Spearman correlation for CC2D1A: SpearmanrResult(correlation=0.23636363636363633, pvalue=0.5108853175152002)
+Method C: Spearman correlation for CC2D1A: SpearmanrResult(correlation=0.23636363636363633, pvalue=0.5108853175152002)
+Method D: Spearman correlation for CC2D1A: SpearmanrResult(correlation=0.23636363636363633, pvalue=0.5108853175152002)
+Method E: Spearman correlation for CC2D1A: SpearmanrResult(correlation=0.22424242424242422, pvalue=0.5334005612725947)
+
+Method A: Spearman correlation for IL1RL1: SpearmanrResult(correlation=0.38181818181818183, pvalue=0.27625533338543595)
+Method B: Spearman correlation for IL1RL1: SpearmanrResult(correlation=0.4424242424242424, pvalue=0.20042268671194224)
+Method C: Spearman correlation for IL1RL1: SpearmanrResult(correlation=0.4424242424242424, pvalue=0.20042268671194224)
+Method D: Spearman correlation for IL1RL1: SpearmanrResult(correlation=0.4424242424242424, pvalue=0.20042268671194224)
+Method E: Spearman correlation for IL1RL1: SpearmanrResult(correlation=0.43030303030303024, pvalue=0.21449233253280775)
 """
 
 
