@@ -326,41 +326,59 @@ def analysis(gene):
 
 
 """
-Method A: Spearman correlation for NFKB2: SpearmanrResult(correlation=-0.07878787878787878, pvalue=0.8287173946974606)
-Method B: Spearman correlation for NFKB2: SpearmanrResult(correlation=-0.07878787878787878, pvalue=0.8287173946974606)
-Method C: Spearman correlation for NFKB2: SpearmanrResult(correlation=-0.07878787878787878, pvalue=0.8287173946974606)
-Method D: Spearman correlation for NFKB2: SpearmanrResult(correlation=-0.07878787878787878, pvalue=0.8287173946974606)
-Method E: Spearman correlation for NFKB2: SpearmanrResult(correlation=-0.07878787878787878, pvalue=0.8287173946974606)
+Method A:  NFKB2: correlation=-0.07878787878787878, pvalue=0.8287173946974606)
+Method B:  NFKB2: correlation=-0.07878787878787878, pvalue=0.8287173946974606)
+Method C:  NFKB2: correlation=-0.07878787878787878, pvalue=0.8287173946974606)
+Method D:  NFKB2: correlation=-0.07878787878787878, pvalue=0.8287173946974606)
+Method E:  NFKB2: correlation=-0.07878787878787878, pvalue=0.8287173946974606)
 
-Method A: Spearman correlation for EIF2B3: SpearmanrResult(correlation=0.24848484848484845, pvalue=0.48877630451924314)
-Method B: Spearman correlation for EIF2B3: SpearmanrResult(correlation=0.24848484848484845, pvalue=0.48877630451924314)
-Method C: Spearman correlation for EIF2B3: SpearmanrResult(correlation=0.24848484848484845, pvalue=0.48877630451924314)
-Method D: Spearman correlation for EIF2B3: SpearmanrResult(correlation=0.24848484848484845, pvalue=0.48877630451924314)
-Method E: Spearman correlation for EIF2B3: SpearmanrResult(correlation=0.17575757575757575, pvalue=0.6271883447764844)
+Method A:  EIF2B3: correlation=0.24848484848484845, pvalue=0.48877630451924314)
+Method B:  EIF2B3: correlation=0.24848484848484845, pvalue=0.48877630451924314)
+Method C:  EIF2B3: correlation=0.24848484848484845, pvalue=0.48877630451924314)
+Method D:  EIF2B3: correlation=0.24848484848484845, pvalue=0.48877630451924314)
+Method E:  EIF2B3: correlation=0.17575757575757575, pvalue=0.6271883447764844)
 
-Method A: Spearman correlation for HLA-C: SpearmanrResult(correlation=0.7333333333333332, pvalue=0.01580059625057158)
-Method B: Spearman correlation for HLA-C: SpearmanrResult(correlation=0.6606060606060605, pvalue=0.03758837757140939)
-Method C: Spearman correlation for HLA-C: SpearmanrResult(correlation=0.7333333333333332, pvalue=0.01580059625057158)
-Method D: Spearman correlation for HLA-C: SpearmanrResult(correlation=0.6606060606060605, pvalue=0.03758837757140939)
-Method E: Spearman correlation for HLA-C: SpearmanrResult(correlation=0.7212121212121211, pvalue=0.018573155089460208)
+Method A:  HLA-C: correlation=0.7333333333333332, pvalue=0.01580059625057158)
+Method B:  HLA-C: correlation=0.6606060606060605, pvalue=0.03758837757140939)
+Method C:  HLA-C: correlation=0.7333333333333332, pvalue=0.01580059625057158)
+Method D:  HLA-C: correlation=0.6606060606060605, pvalue=0.03758837757140939)
+Method E:  HLA-C: correlation=0.7212121212121211, pvalue=0.018573155089460208)
 
-Method A: Spearman correlation for STAT1: SpearmanrResult(correlation=0.8666666666666665, pvalue=0.0011735381801554687)
-Method B: Spearman correlation for STAT1: SpearmanrResult(correlation=0.8666666666666665, pvalue=0.0011735381801554687)
-Method C: Spearman correlation for STAT1: SpearmanrResult(correlation=0.8666666666666665, pvalue=0.0011735381801554687)
-Method D: Spearman correlation for STAT1: SpearmanrResult(correlation=0.8666666666666665, pvalue=0.0011735381801554687)
-Method E: Spearman correlation for STAT1: SpearmanrResult(correlation=0.8303030303030302, pvalue=0.0029402270232795065)
+Method A:  STAT1: correlation=0.8666666666666665, pvalue=0.0011735381801554687)
+Method B:  STAT1: correlation=0.8666666666666665, pvalue=0.0011735381801554687)
+Method C:  STAT1: correlation=0.8666666666666665, pvalue=0.0011735381801554687)
+Method D:  STAT1: correlation=0.8666666666666665, pvalue=0.0011735381801554687)
+Method E:  STAT1: correlation=0.8303030303030302, pvalue=0.0029402270232795065)
 
-Method A: Spearman correlation for CC2D1A: SpearmanrResult(correlation=0.23636363636363633, pvalue=0.5108853175152002)
-Method B: Spearman correlation for CC2D1A: SpearmanrResult(correlation=0.23636363636363633, pvalue=0.5108853175152002)
-Method C: Spearman correlation for CC2D1A: SpearmanrResult(correlation=0.23636363636363633, pvalue=0.5108853175152002)
-Method D: Spearman correlation for CC2D1A: SpearmanrResult(correlation=0.23636363636363633, pvalue=0.5108853175152002)
-Method E: Spearman correlation for CC2D1A: SpearmanrResult(correlation=0.22424242424242422, pvalue=0.5334005612725947)
+Method A:  CC2D1A: correlation=0.23636363636363633, pvalue=0.5108853175152002)
+Method B:  CC2D1A: correlation=0.23636363636363633, pvalue=0.5108853175152002)
+Method C:  CC2D1A: correlation=0.23636363636363633, pvalue=0.5108853175152002)
+Method D:  CC2D1A: correlation=0.23636363636363633, pvalue=0.5108853175152002)
+Method E:  CC2D1A: correlation=0.22424242424242422, pvalue=0.5334005612725947)
 
-Method A: Spearman correlation for IL1RL1: SpearmanrResult(correlation=0.38181818181818183, pvalue=0.27625533338543595)
-Method B: Spearman correlation for IL1RL1: SpearmanrResult(correlation=0.4424242424242424, pvalue=0.20042268671194224)
-Method C: Spearman correlation for IL1RL1: SpearmanrResult(correlation=0.4424242424242424, pvalue=0.20042268671194224)
-Method D: Spearman correlation for IL1RL1: SpearmanrResult(correlation=0.4424242424242424, pvalue=0.20042268671194224)
-Method E: Spearman correlation for IL1RL1: SpearmanrResult(correlation=0.43030303030303024, pvalue=0.21449233253280775)
+Method A:  IL1RL1: correlation=0.38181818181818183, pvalue=0.27625533338543595)
+Method B:  IL1RL1: correlation=0.4424242424242424, pvalue=0.20042268671194224)
+Method C:  IL1RL1: correlation=0.4424242424242424, pvalue=0.20042268671194224)
+Method D:  IL1RL1: correlation=0.4424242424242424, pvalue=0.20042268671194224)
+Method E:  IL1RL1: correlation=0.43030303030303024, pvalue=0.21449233253280775)
+
+Method A:  MAPK13: correlation=0.19999999999999998, pvalue=0.5795840000000001)
+Method B:  MAPK13: correlation=0.19999999999999998, pvalue=0.5795840000000001)
+Method C:  MAPK13: correlation=0.19999999999999998, pvalue=0.5795840000000001)
+Method D:  MAPK13: correlation=0.19999999999999998, pvalue=0.5795840000000001)
+Method E:  MAPK13: correlation=0.23636363636363633, pvalue=0.5108853175152002)
+
+Method A:  ATP5MK: correlation=0.11515151515151514, pvalue=0.7514196523258483)
+Method B:  ATP5MK: correlation=0.12727272727272726, pvalue=0.7260570147627894)
+Method C:  ATP5MK: correlation=0.11515151515151514, pvalue=0.7514196523258483)
+Method D:  ATP5MK: correlation=0.11515151515151514, pvalue=0.7514196523258483)
+Method E:  ATP5MK: correlation=0.2121212121212121, pvalue=0.5563057751029299)
+
+Method A: HDAC1: correlation=0.7696969696969697, pvalue=0.009221952722215994)
+Method B: HDAC1: correlation=0.7696969696969697, pvalue=0.009221952722215994)
+Method C: HDAC1: correlation=0.7696969696969697, pvalue=0.009221952722215994)
+Method D: HDAC1: correlation=0.7696969696969697, pvalue=0.009221952722215994)
+Method E: HDAC1: correlation=0.7696969696969697, pvalue=0.009221952722215994)
 """
 
 
@@ -614,5 +632,4 @@ Gene: GAPDH, distance: 0.31564186749154904; high: 0.4583166123459823; low: 0.142
 Gene: THOC6, distance: 0.31540462124973234; high: 0.5446898442730845; low: 0.22928522302335216
 Gene: ATP5F1A, distance: 0.315371333815199; high: 0.5099900288513065; low: 0.19461869503610751
 Gene: YWHAZ, distance: 0.31522846983785235; high: 0.47128300019670355; low: 0.15605453035885117
-
 """

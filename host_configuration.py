@@ -17,6 +17,7 @@ class HostConfiguration(object):
     # CHOSEN_GENE = "HLA-C"
     # CHOSEN_GENE = "NFKB2"
     """"HLA-C, "NFKB2", EIF2B3, "STAT1", "CC2D1A", "IL1RL1", "MAPK13", "ATP5MK","""
+    # inference and analysis of ATP and HDA
     GENES = ["HDAC1"]
     CHECKPOINTS_PATH = os.path.join(os.path.expanduser("~"), "checkpoints", "{gene}")
     PREDICTIONS_SUMMARY_FILE = os.path.join(CHECKPOINTS_PATH, "predictions.txt")
