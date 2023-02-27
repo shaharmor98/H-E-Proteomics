@@ -20,7 +20,7 @@ from host_configuration import HostConfiguration
 from models.proteinQuant.cross_validation.kfold_loop import KFoldLoop
 from models.proteinQuant.cross_validation.tiles_kfold_data_module import TilesKFoldDataModule
 from models.proteinQuant.protein_quant_classifier import ProteinQuantClassifier
-from models.proteinQuant.tiles_dataset import TilesDataset
+# from models.proteinQuant.tiles_dataset import TilesDataset
 from preprocessor import Preprocessor
 
 import json
@@ -479,7 +479,9 @@ def train(gene):
     val_proportion_size = 0.1
 
     train_set, test_set = get_random_split(gene_slides_with_labels, test_proportion_size)
+    print("Train set: {}, Test set: {} ".format(len(train_set), len(test_set)))
     train_set, val_set = get_random_split(train_set, val_proportion_size)
+    print("Train set: {}, Val set: {} ".format(len(train_set), len(val_set)))
 
     with open(HostConfiguration.TEST_IDS_FILE.format(gene=gene), 'w') as f:
         json.dump(test_set, f)
