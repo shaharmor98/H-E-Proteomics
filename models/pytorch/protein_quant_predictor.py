@@ -46,7 +46,7 @@ class ProteinQuantPredictor(pl.LightningModule):
 
         tmp = morph_features[0]
         print("Tmp shape: ".format(tmp.shape))
-        tmp = gray_to_rgb_transforms(tmp)
+        tmp = gray_to_rgb_transforms(tmp).to(self._device)
         print("Tmp shape: ".format(tmp.shape))
         morph_features = self.morphological_features(tmp)
         print("image features: ", image_features.shape)
