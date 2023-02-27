@@ -43,7 +43,6 @@ class TilesDataset(Dataset):
         img = skimage.transform.resize(img, (224, 224), preserve_range=True).astype('uint8')
         morph_features = self.morphological_feature.extract(img)
         textures_features = self.texture_features.extract(img)
-        features = torch.from_numpy(np.concatenate([morph_features, textures_features]))
 
         img = self.transform(img)
 
@@ -51,4 +50,4 @@ class TilesDataset(Dataset):
         slide_id = tile_slide_name[:tile_slide_name.find(".")]
         tile_true_label = self._ids[slide_id]
 
-        return (img, features), tile_true_label
+        return img, morph_features, textures_features, tile_true_label

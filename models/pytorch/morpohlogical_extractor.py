@@ -15,5 +15,5 @@ class MorphologicalFeatureExtractor(object):
         dilation = skimage.morphology.dilation(gray_image, selem)
         opening = skimage.morphology.opening(gray_image, selem)
         closing = skimage.morphology.closing(gray_image, selem)
-        morph_features = np.concatenate([erosion.flatten(), dilation.flatten(), opening.flatten(), closing.flatten()])
+        morph_features = np.stack((erosion, dilation, opening, closing), axis=0)
         return morph_features

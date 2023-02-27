@@ -8,16 +8,15 @@ from torch import nn
 
 
 class ProteinQuantPredictor(pl.LightningModule):
-    def __init__(self, features_size, device):
+    def __init__(self, textures_features_size, device):
         super(ProteinQuantPredictor, self).__init__()
 
-        self.model = EfficientNet.from_pretrained('efficientnet-b0')
-        self.freeze_architecture()
-        # self.fc1 = torch.nn.Linear(1049591, 1024)
-        self.fc1 = torch.nn.Linear(1000 + features_size, 1024)
-        self.fc2 = torch.nn.Linear(1024, 512)
-        self.fc3 = torch.nn.Linear(512, 256)
-        self.fc4 = torch.nn.Linear(256, 1)
+        self.image_features = EfficientNet.from_pretrained('efficientnet-b0')
+        self.morphological_features = EfficientNet.from_pretrained('efficientnet-b0')
+        self.freeze_architecture(self.image_features)
+        self.freeze_architecture(self.morphological_features)
+        self.fc1 = torch.nn.Linear(1000 + 1000 + textures_features_size, 256)
+        self.fc2 = torch.nn.Linear(256, 1)
         self.learning_rate = 0.001
         self._device = device
         self.loss = nn.MSELoss()
@@ -31,19 +30,20 @@ class ProteinQuantPredictor(pl.LightningModule):
         # self.model._fc.bias.data.fill_(0.0)
         # self.model._fc.weight.data.normal_(0.0, 0.02)
 
-    def freeze_architecture(self):
-        for name, param in self.model.named_parameters():
+    def freeze_architecture(self, model):
+        for name, param in model.named_parameters():
             if not '_fc' in name:  # exclude the final layer
                 param.requires_grad = False
 
-    def forward(self, x):
-        img, features = x
-        image_features = self.model(img)
-        x = torch.concatenate([image_features, features], dim=1).float()
+    def forward(self, img, morph_features, textures_features):
+        image_features = self.image_features(img)
+        morph_features = self.morphological_features(morph_features)
+        print("image features: ", image_features.shape)
+        print("morph features: ", morph_features.shape)
+        print("texture features: ", textures_features.shape)
+        x = torch.concatenate([image_features, morph_features, textures_features], dim=1).float()
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        pred = self.fc4(x)
+        pred = self.fc2(x)
         return pred
 
     def predict_step(self, batch, batch_idx, dataloader_idx: int = 0):
@@ -52,14 +52,14 @@ class ProteinQuantPredictor(pl.LightningModule):
         return y_hat
 
     def training_step(self, batch, batch_idx):
-        x, original_labels = batch
+        img, morph_features, textures_features, labels = batch
 
-        original_labels = original_labels.reshape(-1, 1).float()
-        if len(x[0]) == 1:
+        original_labels = labels.reshape(-1, 1).float()
+        if len(img) == 1:
             print("Found length 0")
             return
 
-        y_hat = self(x)
+        y_hat = self(img, morph_features, textures_features)
         loss = self.loss(y_hat.float(), original_labels)
 
         self.log('train_loss', loss, prog_bar=True, sync_dist=True)

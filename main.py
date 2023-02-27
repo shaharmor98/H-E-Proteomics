@@ -454,12 +454,10 @@ def train(gene):
     random.seed(42)
 
     random_image = np.random.rand(224, 224, 3)
-    morph_features = MorphologicalFeatureExtractor().extract(random_image)
     textures_features = TextureFeaturesExtractor().extract(random_image)
-    features = np.concatenate([morph_features, textures_features])
 
-    print("features dim: ", features.shape[0])
-    model = ProteinQuantPredictor(features.shape[0], device)
+    print("textures_features.shape[0]: {}".format(textures_features.shape[0]))
+    model = ProteinQuantPredictor(textures_features.shape[0], device)
 
     tiles_directory_path = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
                                                                     patch_size=HostConfiguration.PATCH_SIZE)
@@ -492,9 +490,9 @@ def train(gene):
     train_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers,
                               persistent_workers=True, pin_memory=True, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=16, num_workers=num_of_workers,
-                            persistent_workers=True, pin_memory=True, shuffle=True)
+                            persistent_workers=True, pin_memory=True)
     test_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers,
-                             persistent_workers=True, pin_memory=True, shuffle=True)
+                             persistent_workers=True, pin_memory=True)
 
     model = model.to(device)
     trainer = pl.Trainer(max_epochs=5, devices="auto", accelerator="auto",
