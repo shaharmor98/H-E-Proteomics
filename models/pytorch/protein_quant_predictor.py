@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from efficientnet_pytorch import EfficientNet
 from torch import nn
+from torchvision import transforms
 
 
 class ProteinQuantPredictor(pl.LightningModule):
@@ -37,7 +38,17 @@ class ProteinQuantPredictor(pl.LightningModule):
 
     def forward(self, img, morph_features, textures_features):
         image_features = self.image_features(img)
-        morph_features = self.morphological_features(morph_features)
+        gray_to_rgb_transforms = transforms.Compose([
+            transforms.ToPILImage(),  # convert tensor to PIL Image
+            transforms.Grayscale(num_output_channels=3),  # convert grayscale to RGB
+            transforms.ToTensor(),  # convert PIL Image to tensor
+        ])
+
+        tmp = morph_features[0]
+        print("Tmp shape: ".format(tmp.shape))
+        tmp = gray_to_rgb_transforms(tmp)
+        print("Tmp shape: ".format(tmp.shape))
+        morph_features = self.morphological_features(tmp)
         print("image features: ", image_features.shape)
         print("morph features: ", morph_features.shape)
         print("texture features: ", textures_features.shape)
