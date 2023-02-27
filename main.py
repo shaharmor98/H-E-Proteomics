@@ -504,6 +504,7 @@ def train(gene):
     for epoch in range(epochs):
         running_loss = 0.0
         for i, data in enumerate(train_loader):
+            print("Running")
             inputs, labels = data
             inputs = [inputs[0].to(device), inputs[1].to(device)]
             labels = labels.to(device)
@@ -522,7 +523,7 @@ def train(gene):
                 print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
                 wandb.log({"epoch": epoch, "loss": running_loss / 2000})
                 running_loss = 0.0
-
+        print("epoch done")
 
 def main():
     train("STAT1")
