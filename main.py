@@ -512,7 +512,7 @@ def train(gene):
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            outputs = model(inputs).float()
+            outputs = model(inputs).float().to(device)
             loss = criterion(outputs, labels.float())
             loss.backward()
             optimizer.step()
