@@ -13,8 +13,8 @@ class ProteinQuantPredictor(pl.LightningModule):
 
         self.model = EfficientNet.from_pretrained('efficientnet-b0')
         self.freeze_architecture()
-        self.fc1 = torch.nn.Linear(1049591, 1024)
-        # self.fc1 = torch.nn.Linear(1000 + features_size, 1024)
+        # self.fc1 = torch.nn.Linear(1049591, 1024)
+        self.fc1 = torch.nn.Linear(1000 + features_size, 1024)
         self.fc2 = torch.nn.Linear(1024, 512)
         self.fc3 = torch.nn.Linear(512, 256)
         self.fc4 = torch.nn.Linear(256, 1)

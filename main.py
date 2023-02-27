@@ -470,7 +470,7 @@ def train(gene):
     gene_slides_with_labels = dia_metadata.get_continuous_normalized_records(gene)
 
     transform_compose = transforms.Compose([transforms.ToPILImage(),
-                                            transforms.Resize(size=(224, 224)),
+                                            # transforms.Resize(size=(224, 224)),
                                             transforms.ToTensor(),
                                             transforms.Normalize(mean=[0.], std=[255.])])
     test_proportion_size = 0.1
