@@ -40,6 +40,7 @@ class TilesDataset(Dataset):
     def __getitem__(self, index):
         # img_path = "/Users/shahar.mor/git/H-E-Proteomics/data/images/zoom_20_size_512/PD31107a.ndpi_65_69.jpeg"
         img_path = os.path.join(self.root_dir, self._files[index])
+        print("img_path: ", img_path)
         img = io.imread(img_path)
         img = skimage.transform.resize(img, (224, 224), preserve_range=True).astype('uint8')
         morph_features = self.morphological_feature.extract(img)
@@ -57,4 +58,6 @@ class TilesDataset(Dataset):
         slide_id = tile_slide_name[:tile_slide_name.find(".")]
         tile_true_label = self._ids[slide_id]
 
+        print("img shape {} morph shape {} texture {} tile {} ".format(img.shape, morph_features.shape,
+                                                                       textures_features.shape, tile_true_label))
         return img, morph_features, textures_features, tile_true_label
