@@ -1,10 +1,9 @@
 import numpy as np
-import torch
-from efficientnet_pytorch import EfficientNet
 import pytorch_lightning as pl
+import torch
 import torch.nn.functional as F
 import torch.optim as optim
-import torchmetrics
+from efficientnet_pytorch import EfficientNet
 from torch import nn
 
 
