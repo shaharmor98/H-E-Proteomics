@@ -5,6 +5,7 @@ import skimage.transform
 import torch
 from skimage import io
 from torch.utils.data import Dataset
+from torchvision import transforms
 
 from models.pytorch.morpohlogical_extractor import MorphologicalFeatureExtractor
 from models.pytorch.texture_extractor import TextureFeaturesExtractor
@@ -42,6 +43,12 @@ class TilesDataset(Dataset):
         img = io.imread(img_path)
         img = skimage.transform.resize(img, (224, 224), preserve_range=True).astype('uint8')
         morph_features = self.morphological_feature.extract(img)
+        gray_to_rgb_transforms = transforms.Compose([
+            transforms.ToPILImage(),  # convert tensor to PIL Image
+            transforms.Grayscale(num_output_channels=3),  # convert grayscale to RGB
+            transforms.ToTensor(),  # convert PIL Image to tensor
+        ])
+        morph_features = gray_to_rgb_transforms(morph_features[0])
         textures_features = self.texture_features.extract(img)
 
         img = self.transform(img)
