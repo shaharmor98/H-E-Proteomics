@@ -9,7 +9,11 @@ from host_configuration import HostConfiguration
 
 class DiaToMetadata(object):
     def __init__(self, dia_excel_path, metadata_excel_path, tiles_directory):
-        self._dia_df = pd.read_excel(dia_excel_path, usecols=range(300))
+        if os.path.exists(HostConfiguration.DIA_PARTIAL_GENES_FILE_PATH):
+            self._dia_df = pd.read_excel(HostConfiguration.DIA_PARTIAL_GENES_FILE_PATH)
+        else:
+            self._dia_df = pd.read_excel(dia_excel_path, usecols=range(300))
+            self._dia_df.to_excel(HostConfiguration.DIA_PARTIAL_GENES_FILE_PATH)
         self._metadata_df = pd.read_excel(metadata_excel_path)
         self.tiles_directory = tiles_directory
 

@@ -29,6 +29,7 @@ class ProteinQuantPredictor(torch.nn.Module):
         img, features = x
         image_features = self.model(img)
         x = torch.concatenate([image_features, features], dim=1)
+        print("X, shape: ", x.shape)
         x = torch.reshape(x, (x.shape[1],)).float()
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))

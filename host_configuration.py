@@ -10,6 +10,8 @@ class HostConfiguration(object):
                                           "230109_RNr_to_metadata.xlsx")
     DIA_GENES_FILE_PATH = os.path.join(os.path.expanduser("~"), "proteomics_from_janne", "Labels_etc",
                                        "SCANB_TNBC_diaPASEF_SN16_E104.xlsx")
+    DIA_PARTIAL_GENES_FILE_PATH = os.path.join(os.path.expanduser("~"), "proteomics_from_janne", "Labels_etc",
+                                               "partial.xlsx")
     PATCH_SIZE = 512
     ZOOM_LEVEL = 20
     SEED = 42

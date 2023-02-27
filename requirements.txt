@@ -16,4 +16,5 @@ openpyxl
 openslide-python
 
 scikit-image
+efficientnet_pytorch
 tqdm

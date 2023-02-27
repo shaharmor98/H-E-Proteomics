@@ -442,7 +442,7 @@ def get_random_split(items, proportion):
     split_idx = int(len(keys) * proportion)
     test_keys = keys[:split_idx]
     train_keys = keys[split_idx:]
-    return {k: items[k] for k in test_keys}, {k: items[k] for k in train_keys}
+    return {k: items[k] for k in train_keys}, {k: items[k] for k in test_keys}
 
 
 def train(gene):
@@ -498,6 +498,7 @@ def train(gene):
     wandb.watch(model, log_freq=10)
     model = model.to(device)
 
+    print("Starting")
     for epoch in range(epochs):
         running_loss = 0.0
         for i, data in enumerate(train_loader):
