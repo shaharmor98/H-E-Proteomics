@@ -444,7 +444,10 @@ def get_random_split(items, proportion):
     train_keys = keys[split_idx:]
     return {k: items[k] for k in train_keys}, {k: items[k] for k in test_keys}
 
-
+def my_collate_fn(data):
+    # TODO: Implement your function
+    # But I guess in your case it should be:
+    return tuple(data)
 def train(gene):
     wandb_logger = WandbLogger(project="proteomics-project", log_model=True)
     device = "cuda"
@@ -487,7 +490,8 @@ def train(gene):
     train_dataset = TilesDataset(tiles_directory_path, transform_compose, train_set)
     val_dataset = TilesDataset(tiles_directory_path, transform_compose, val_set)
     test_dataset = TilesDataset(tiles_directory_path, transform_compose, test_set)
-    train_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers,
+    # todo - maybe delete collate_fn
+    train_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers, collate_fn=my_collate_fn,
                               persistent_workers=True, pin_memory=True, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=16, num_workers=num_of_workers,
                             persistent_workers=True, pin_memory=True)

@@ -58,6 +58,8 @@ class TilesDataset(Dataset):
         slide_id = tile_slide_name[:tile_slide_name.find(".")]
         tile_true_label = self._ids[slide_id]
 
-        print("img shape {} morph shape {} texture {} tile {} ".format(img.shape, morph_features.shape,
-                                                                       textures_features.shape, tile_true_label))
+        print("img name {} img shape {} morph shape {} texture {} tile {} ".format(tile_slide_name, img.shape,
+                                                                                   morph_features.shape,
+                                                                                   textures_features.shape,
+                                                                                   tile_true_label))
         return img, morph_features, textures_features, tile_true_label
