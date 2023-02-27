@@ -1,8 +1,7 @@
-import skimage
-from skimage.feature import greycomatrix, greycoprops, local_binary_pattern
-from skimage.color import gray2rgb
-
 import numpy as np
+import skimage
+from skimage.color import gray2rgb
+from skimage.feature import local_binary_pattern, graycoprops, graycomatrix
 
 
 class TextureFeaturesExtractor(object):
@@ -23,9 +22,7 @@ class TextureFeaturesExtractor(object):
         return texture_features
 
     # define LBP function
-    def compute_lbp(self, image, radius, n_points):
-        gray_image = skimage.color.rgb2gray(image)
-
+    def compute_lbp(self, gray_image, radius, n_points):
         lbp = local_binary_pattern(gray_image, n_points, radius, method='uniform')
         n_bins = int(lbp.max() + 1)
         hist, _ = np.histogram(lbp, density=True, bins=n_bins, range=(0, n_bins))
@@ -34,10 +31,10 @@ class TextureFeaturesExtractor(object):
     # define GLCM function
     def compute_glcm(self, image, distances=[1], angles=[0], levels=256, symmetric=True, normed=True):
         img_uint = (image * 255).astype(np.uint8)
-        glcm = greycomatrix(img_uint, distances, angles, levels=levels, symmetric=symmetric, normed=normed)
+        glcm = graycomatrix(img_uint, distances, angles, levels=levels, symmetric=symmetric, normed=normed)
         features = {'contrast': [], 'dissimilarity': [], 'homogeneity': [], 'energy': [], 'correlation': []}
         for prop in features.keys():
-            features[prop] = [greycoprops(glcm, prop) for angle in angles for distance in
+            features[prop] = [graycoprops(glcm, prop) for angle in angles for distance in
                               distances]
         res = np.concatenate(list(features.values()))
         res = res.reshape(-1, )

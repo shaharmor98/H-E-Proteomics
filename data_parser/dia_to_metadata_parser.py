@@ -6,12 +6,6 @@ import pandas as pd
 
 from host_configuration import HostConfiguration
 
-"""
-You should implement the following things:
-5. Train on that gene- should be 0 or 1. filter out records as Alona did
-6. Create test function that unites everything 
-"""
-
 
 class DiaToMetadata(object):
     def __init__(self, dia_excel_path, metadata_excel_path, tiles_directory):
@@ -102,6 +96,28 @@ class DiaToMetadata(object):
             slide_ids[slide_id] = normalized_row[row_column].values[0]
 
         return slide_ids
+
+    def get_continuous_normalized_records(self, gene_name):
+        tnbc = self.get_tnbc_unique_df()
+        ids = self.get_existing_slides_ids()
+        tnbc = tnbc[tnbc['SCANB_PD_ID'].isin(ids.keys())]
+        rnrs = self.map_scanb_pd_id_to_rnr(tnbc['SCANB_PD_ID'].to_list())
+        genes = self.get_genes_with_complete_records(rnrs)
+        gene_row = genes.loc[genes['Gene_symbol'] == gene_name]
+        if len(gene_row) != 1:
+            raise RuntimeError("WTF just happened with {}".format(gene_name))
+
+        normalized_row = self.get_gene_normalized_protein_quant(gene_row)
+        target_rnrs = [(record[record.find("_") + 1:], record) for record in normalized_row.columns.to_list() if
+                       record.startswith('ProteinQuant_')]
+
+        slide_ids = {}
+        for rnr, row_column in target_rnrs:
+            slide_id = list(filter(lambda x: rnrs[x] == rnr, rnrs))[0]
+            slide_ids[slide_id] = normalized_row[row_column].values[0]
+
+        return slide_ids
+
 
     def get_gene_slides_with_labels(self, gene_name):
         tnbc = self.get_tnbc_unique_df()
