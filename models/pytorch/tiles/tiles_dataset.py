@@ -38,8 +38,11 @@ class TilesDataset(Dataset):
 
     def __getitem__(self, index):
         # img_path = "/Users/shahar.mor/git/H-E-Proteomics/data/images/zoom_20_size_512/PD31107a.ndpi_65_69.jpeg"
+        print("Asked for item: {}".format(index))
         img_path = os.path.join(self.root_dir, self._files[index])
         img = io.imread(img_path)
+        print("Img: {}".format(type(img)))
+        print("Img: {}".format(img.shape))
         img = skimage.transform.resize(img, (512, 512), preserve_range=True).astype('uint8')
 
         morph_features = self.morphological_feature.extract(img)
