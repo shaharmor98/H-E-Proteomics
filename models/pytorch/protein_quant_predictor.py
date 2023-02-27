@@ -38,6 +38,8 @@ class ProteinQuantPredictor(pl.LightningModule):
     def forward(self, x):
         img, features = x
         image_features = self.model(img)
+        print("Img features shape: ", image_features.shape)
+        print("features shape: ", features.shape)
         x = torch.concatenate([image_features, features], dim=1)
         print("X, shape: ", x.shape)
         x = F.relu(self.fc1(x))
