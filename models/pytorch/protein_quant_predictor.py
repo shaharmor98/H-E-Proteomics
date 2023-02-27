@@ -44,10 +44,10 @@ class ProteinQuantPredictor(pl.LightningModule):
             transforms.ToTensor(),  # convert PIL Image to tensor
         ])
 
-        tmp = morph_features[0]
-        print("Tmp shape: ".format(tmp.shape))
+        tmp = morph_features[:, 0, :, :]
+        print("Tmp shape: {}".format(tmp.shape))
         tmp = gray_to_rgb_transforms(tmp).to(self._device)
-        print("Tmp shape: ".format(tmp.shape))
+        print("Tmp shape: {}".format(tmp.shape))
         morph_features = self.morphological_features(tmp)
         print("image features: ", image_features.shape)
         print("morph features: ", morph_features.shape)
@@ -64,7 +64,10 @@ class ProteinQuantPredictor(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         img, morph_features, textures_features, labels = batch
-
+        print("img shape: {}".format(img.shape))
+        print("morph shape: {}".format(morph_features.shape))
+        print("texture shape: {}".format(textures_features.shape))
+        print("labels shape: {}".format(labels.shape))
         original_labels = labels.reshape(-1, 1).float()
         if len(img) == 1:
             print("Found length 0")
@@ -107,4 +110,3 @@ class ProteinQuantPredictor(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
-
