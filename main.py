@@ -500,7 +500,7 @@ def train(gene):
     wandb.watch(model, log_freq=10)
     model = model.to(device)
 
-    for i in train_dataset.__len__():
+    for i in range(train_dataset.__len__()):
         print("i")
         try:
             train_dataset.__getitem__(i)
