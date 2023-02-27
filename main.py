@@ -500,6 +500,15 @@ def train(gene):
     wandb.watch(model, log_freq=10)
     model = model.to(device)
 
+    for i in train_dataset.__len__():
+        print("i")
+        try:
+            train_dataset.__getitem__(i)
+        except Exception:
+            print("Got exception for index: ", i)
+            break
+            exit(1)
+
     print("Starting")
     for epoch in range(epochs):
         running_loss = 0.0
