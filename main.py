@@ -490,8 +490,8 @@ def train(gene):
     train_dataset = TilesDataset(tiles_directory_path, transform_compose, train_set)
     val_dataset = TilesDataset(tiles_directory_path, transform_compose, val_set)
     test_dataset = TilesDataset(tiles_directory_path, transform_compose, test_set)
-    train_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers,
-                              persistent_workers=True, pin_memory=True, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=1, num_workers=num_of_workers,
+                              persistent_workers=True, shuffle=True)
     val_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers,
                             persistent_workers=True, pin_memory=True, shuffle=True)
     test_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers,

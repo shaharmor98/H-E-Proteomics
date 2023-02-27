@@ -40,11 +40,8 @@ class TilesDataset(Dataset):
         # img_path = "/Users/shahar.mor/git/H-E-Proteomics/data/images/zoom_20_size_512/PD31107a.ndpi_65_69.jpeg"
         img_path = os.path.join(self.root_dir, self._files[index])
         img = io.imread(img_path)
-        try:
-            img = skimage.transform.resize(img, (512, 512), preserve_range=True).astype('uint8')
-        except Exception:
-            print("Shit")
-            print("img path: ", img_path)
+        print(img.shape)
+        img = skimage.transform.resize(img, (512, 512), preserve_range=True).astype('uint8')
         morph_features = self.morphological_feature.extract(img)
         textures_features = self.texture_features.extract(img)
         features = torch.from_numpy(np.concatenate([morph_features, textures_features]))
