@@ -48,7 +48,7 @@ class TilesDataset(Dataset):
             transforms.Grayscale(num_output_channels=3),  # convert grayscale to RGB
             transforms.ToTensor(),  # convert PIL Image to tensor
         ])
-        morph_features = gray_to_rgb_transforms(morph_features[0])
+        morph_features = gray_to_rgb_transforms(torch.from_numpy(morph_features[0].astype(np.float32)))
         textures_features = self.texture_features.extract(img)
 
         img = self.transform(img)

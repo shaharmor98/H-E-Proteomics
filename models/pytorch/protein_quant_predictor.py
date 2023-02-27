@@ -38,7 +38,6 @@ class ProteinQuantPredictor(pl.LightningModule):
 
     def forward(self, img, morph_features, textures_features):
         image_features = self.image_features(img)
-        print("morph shape: {}".format(morph_features.shape))
         morph_features = self.morphological_features(morph_features)
         print("image features: ", image_features.shape)
         print("morph features: ", morph_features.shape)
