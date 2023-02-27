@@ -447,7 +447,10 @@ def get_random_split(items, proportion):
 
 def train(gene):
     wandb.init()
+    device = "cuda"
+
     torch.manual_seed(42)
+    seed_everything(42)
     random.seed(42)
 
     random_image = np.random.rand(512, 512, 3)
@@ -455,13 +458,8 @@ def train(gene):
     textures_features = TextureFeaturesExtractor().extract(random_image)
     features = np.concatenate([morph_features, textures_features])
 
-    model = ProteinQuantPredictor(features.shape[0])
-    epochs = 2
+    model = ProteinQuantPredictor(features.shape[0], device)
 
-    criterion = nn.MSELoss()
-    optimizer = optim.Adagrad(model.parameters(), lr=0.001)
-
-    device = "cuda"
     tiles_directory_path = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
                                                                     patch_size=HostConfiguration.PATCH_SIZE)
 
@@ -490,17 +488,21 @@ def train(gene):
     train_dataset = TilesDataset(tiles_directory_path, transform_compose, train_set)
     val_dataset = TilesDataset(tiles_directory_path, transform_compose, val_set)
     test_dataset = TilesDataset(tiles_directory_path, transform_compose, test_set)
-    train_loader = DataLoader(train_dataset, batch_size=1, num_workers=num_of_workers,
-                              persistent_workers=True, shuffle=True)
-    val_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers,
+    train_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers,
+                              persistent_workers=True, pin_memory=True, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=16, num_workers=num_of_workers,
                             persistent_workers=True, pin_memory=True, shuffle=True)
     test_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers,
                              persistent_workers=True, pin_memory=True, shuffle=True)
 
-    wandb.watch(model, log_freq=10)
+    wandb_logger = WandbLogger(project="proteomics-project", log_model=True)
     model = model.to(device)
+    trainer = pl.Trainer(max_epochs=5, devices="auto", accelerator="auto",
+                         num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
+                         default_root_dir=HostConfiguration.CHECKPOINTS_PATH.format(gene=gene))
+    trainer.fit(model, train_loader, val_loader)
 
-    print("Starting")
+    """
     for epoch in range(epochs):
         running_loss = 0.0
         for i, data in enumerate(train_loader):
@@ -512,7 +514,7 @@ def train(gene):
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            outputs = model(inputs).float().to(device)
+            outputs = model(inputs).float()
             loss = criterion(outputs, labels.float())
             loss.backward()
             optimizer.step()
@@ -524,9 +526,13 @@ def train(gene):
                 wandb.log({"epoch": epoch, "loss": running_loss / 2000})
                 running_loss = 0.0
         print("epoch done")
+        """
+
 
 def main():
-    train("STAT1")
+    gene = "STAT1"
+    prepare_train_env(gene)
+    train(gene)
     """
     parser = init_argparse()
     args = parser.parse_args()

@@ -21,7 +21,7 @@ class HostConfiguration(object):
     """"HLA-C, "NFKB2", EIF2B3, "STAT1", "CC2D1A", "IL1RL1", "MAPK13", "ATP5MK","""
     # inference and analysis of ATP and HDA
     GENES = ["HDAC1"]
-    CHECKPOINTS_PATH = os.path.join(os.path.expanduser("~"), "checkpoints", "{gene}")
+    CHECKPOINTS_PATH = os.path.join(os.path.expanduser("~"), "checkpoints", "hybrid", "{gene}")
     PREDICTIONS_SUMMARY_FILE = os.path.join(CHECKPOINTS_PATH, "predictions.txt")
     TEST_IDS_FILE = os.path.join(CHECKPOINTS_PATH, "test_ids.txt")
     NUM_OF_FOLDS = 10
