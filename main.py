@@ -507,36 +507,10 @@ def train(gene):
                              persistent_workers=True, pin_memory=True)
 
     model = model.to(device)
-    trainer = pl.Trainer(max_epochs=5, devices="auto", accelerator="auto", profiler="simple",
+    trainer = pl.Trainer(max_epochs=5, devices="auto", accelerator="auto",  # , profiler="simple",
                          num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
                          default_root_dir=HostConfiguration.CHECKPOINTS_PATH.format(gene=gene))
     trainer.fit(model, train_loader, val_loader)
-
-    """
-    for epoch in range(epochs):
-        running_loss = 0.0
-        for i, data in enumerate(train_loader):
-            print("Running")
-            inputs, labels = data
-            inputs = [inputs[0].to(device), inputs[1].to(device)]
-            labels = labels.to(device)
-            # zero the parameter gradients
-            optimizer.zero_grad()
-
-            # forward + backward + optimize
-            outputs = model(inputs).float()
-            loss = criterion(outputs, labels.float())
-            loss.backward()
-            optimizer.step()
-
-            # print statistics
-            running_loss += loss.item()
-            if i % 2000 == 1999:  # print every 2000 mini-batches
-                print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
-                wandb.log({"epoch": epoch, "loss": running_loss / 2000})
-                running_loss = 0.0
-        print("epoch done")
-        """
 
 
 def main():
