@@ -463,47 +463,47 @@ def get_random_split(dataset, proportion):
 
 
 def eval_model(gene):
-    tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
-                                                               patch_size=HostConfiguration.PATCH_SIZE)
+tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
+                                                           patch_size=HostConfiguration.PATCH_SIZE)
 
-    with open(HostConfiguration.TEST_IDS_FILE.format(gene=gene), 'r') as f:
-        ids = json.load(f)
-        test_ids = []
-        for k, v in ids.items():
-            test_ids.append({k: v})
+with open(HostConfiguration.TEST_IDS_FILE.format(gene=gene), 'r') as f:
+    ids = json.load(f)
+    test_ids = []
+    for k, v in ids.items():
+        test_ids.append({k: v})
 
-    transform_compose = transforms.Compose([
-        # transform_compose = transforms.Compose([transforms.ToPILImage(),
-        transforms.Resize(size=(224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.], std=[255.])])
+transform_compose = transforms.Compose([
+    # transform_compose = transforms.Compose([transforms.ToPILImage(),
+    transforms.Resize(size=(224, 224)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.], std=[255.])])
 
-    results = {}
-    ckpt_path = "/home/shaharmor98/checkpoints/hybrid/STAT1/model.ckpt"
-    model = ProteinQuantPredictor.load_from_checkpoint(ckpt_path)
-    model_name = os.path.basename(ckpt_path)
-    print("Starting {}".format(model_name))
-    trainer = pl.Trainer(devices=1, accelerator="auto")
-    for i, test_id in enumerate(test_ids):
-        key_name = list(test_id.keys())[0]
-        if not key_name in results:
-            results[key_name] = []
-        print("{}: Starting test_id: {}".format(i, test_id))
-        dataset = TilesDataset(tiles_directory, transform_compose, None, test_id)
-        predictions = trainer.predict(model,
-                                      dataloaders=DataLoader(dataset, num_workers=int(multiprocessing.cpu_count()),
-                                                             pin_memory=True, persistent_workers=True))
-        predictions = [p.item() for p in predictions]
-        results[key_name].append(predictions)
+results = {}
+ckpt_path = "/home/shaharmor98/checkpoints/hybrid/STAT1/model-erosion.ckpt"
+model = ProteinQuantPredictor.load_from_checkpoint(ckpt_path)
+model_name = os.path.basename(ckpt_path)
+print("Starting {}".format(model_name))
+trainer = pl.Trainer(devices=1, accelerator="auto")
+for i, test_id in enumerate(test_ids):
+    key_name = list(test_id.keys())[0]
+    if not key_name in results:
+        results[key_name] = []
+    print("{}: Starting test_id: {}".format(i, test_id))
+    dataset = TilesDataset(tiles_directory, transform_compose, None, test_id)
+    predictions = trainer.predict(model,
+                                  dataloaders=DataLoader(dataset, num_workers=int(multiprocessing.cpu_count()),
+                                                         pin_memory=True, persistent_workers=True))
+    predictions = [p.item() for p in predictions]
+    results[key_name].append(predictions)
 
-        actual = []
-        pred = []
+    actual = []
+    pred = []
 
-        for t in test_ids:
-            k = list(t.keys())[0]
-            actual.append(t[k])
-            pred.append(np.mean(results[k]))
-        scipy.stats.spearmanr(pred, actual)
+    for t in test_ids:
+        k = list(t.keys())[0]
+        actual.append(t[k])
+        pred.append(np.mean(results[k]))
+    scipy.stats.spearmanr(pred, actual)
         return results
 
 

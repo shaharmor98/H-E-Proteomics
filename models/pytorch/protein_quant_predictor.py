@@ -62,8 +62,8 @@ class ProteinQuantPredictor(pl.LightningModule):
         # return pred
 
     def predict_step(self, batch, batch_idx, dataloader_idx: int = 0):
-        x, label = batch
-        y_hat = self(x)
+        x, morph, label = batch
+        y_hat = self(x, morph)
         return y_hat
 
     def training_step(self, batch, batch_idx):
