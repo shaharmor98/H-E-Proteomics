@@ -529,11 +529,11 @@ def train(gene):
                                  tiles_directory_path)
     gene_slides_with_labels = dia_metadata.get_continuous_normalized_records(gene)
 
-    # transform_compose = transforms.Compose([
-    transform_compose = transforms.Compose([transforms.ToPILImage(),
-                                            transforms.Resize(size=(224, 224)),
-                                            transforms.ToTensor(),
-                                            transforms.Normalize(mean=[0.], std=[255.])])
+    transform_compose = transforms.Compose([
+        # transform_compose = transforms.Compose([transforms.ToPILImage(),
+        transforms.Resize(size=(224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.], std=[255.])])
     gray_to_rgb_transforms = transforms.Compose([
         transforms.ToPILImage(),  # convert tensor to PIL Image
         transforms.Grayscale(num_output_channels=3),  # convert grayscale to RGB
