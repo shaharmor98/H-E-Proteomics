@@ -499,14 +499,14 @@ def train(gene):
     val_dataset = TilesDataset(tiles_directory_path, transform_compose, gray_to_rgb_transforms, val_set)
     test_dataset = TilesDataset(tiles_directory_path, transform_compose, gray_to_rgb_transforms, test_set)
     train_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers,
-                              persistent_workers=True, pin_memory=True, shuffle=True)
+                              persistent_workers=True, pin_memory=True)  # , prefetch_factor=64)
     val_loader = DataLoader(val_dataset, batch_size=16, num_workers=num_of_workers,
                             persistent_workers=True, pin_memory=True)
     test_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers,
                              persistent_workers=True, pin_memory=True)
 
     model = model.to(device)
-    trainer = pl.Trainer(max_epochs=5, devices="auto", accelerator="auto",  profiler="pytorch",
+    trainer = pl.Trainer(max_epochs=5, devices="auto", accelerator="auto", profiler="pytorch",
                          num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
                          default_root_dir=HostConfiguration.CHECKPOINTS_PATH.format(gene=gene))
     trainer.fit(model, train_loader, val_loader)

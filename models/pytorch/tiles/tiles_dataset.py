@@ -43,15 +43,15 @@ class TilesDataset(Dataset):
         img_path = os.path.join(self.root_dir, self._files[index])
         img = io.imread(img_path)
         img = skimage.transform.resize(img, (224, 224), preserve_range=True).astype('uint8')
-        morph_features = self.morphological_feature.extract(img)
-        morph_features = self.gray2rgb_transform(torch.from_numpy(morph_features[0].astype(np.float32)))
-        textures_features = torch.from_numpy(self.texture_features.extract(img))
-        if textures_features.shape != torch.Size([15, ]):
-            if textures_features.shape[0] > 15:
-                print("Fuck {} shape: {}".format(img_path, textures_features.shape))
-            else:
-                pad_length = 15 - textures_features.shape[0]
-                textures_features = torch.cat([textures_features, torch.zeros(pad_length)], dim=0)
+        # morph_features = self.morphological_feature.extract(img)
+        # morph_features = self.gray2rgb_transform(torch.from_numpy(morph_features[0].astype(np.float32)))
+        # textures_features = torch.from_numpy(self.texture_features.extract(img))
+        # if textures_features.shape != torch.Size([15, ]):
+        #     if textures_features.shape[0] > 15:
+        #         print("Fuck {} shape: {}".format(img_path, textures_features.shape))
+        #     else:
+        #         pad_length = 15 - textures_features.shape[0]
+        #         textures_features = torch.cat([textures_features, torch.zeros(pad_length)], dim=0)
 
         img = self.transform(img)
 
@@ -59,4 +59,5 @@ class TilesDataset(Dataset):
         slide_id = tile_slide_name[:tile_slide_name.find(".")]
         tile_true_label = self._ids[slide_id]
 
-        return img, morph_features, textures_features, tile_true_label
+        return img, tile_true_label
+        # return img, morph_features, textures_features, tile_true_label
