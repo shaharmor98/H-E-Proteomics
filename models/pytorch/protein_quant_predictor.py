@@ -15,7 +15,7 @@ class ProteinQuantPredictor(pl.LightningModule):
         self.image_features = EfficientNet.from_pretrained('efficientnet-b0')
         # self.morphological_features = EfficientNet.from_pretrained('efficientnet-b0')
         self.freeze_architecture(self.image_features)
-        self.freeze_architecture(self.morphological_features)
+        # self.freeze_architecture(self.morphological_features)
         self.fc1 = torch.nn.Linear(1000, 256)
         # self.fc1 = torch.nn.Linear(1000 + 1000 + textures_features_size, 256)
         self.fc2 = torch.nn.Linear(256, 1)
@@ -76,13 +76,15 @@ class ProteinQuantPredictor(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         # this is the validation loop
-        img, morph_features, textures_features, labels = batch
+        img, labels = batch
+        # img, morph_features, textures_features, labels = batch
         original_labels = labels.reshape(-1, 1).float()
         if len(img) == 1:
             print("Found length 0")
             return
 
-        y_hat = self(img, morph_features, textures_features)
+        y_hat = self(img)
+        # y_hat = self(img, morph_features, textures_features)
         loss = self.loss(y_hat.float(), original_labels)
 
         self.log('val_loss', loss, prog_bar=True, sync_dist=True)
@@ -97,13 +99,15 @@ class ProteinQuantPredictor(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         # this is the test loop
-        img, morph_features, textures_features, labels = batch
+        img, labels = batch
+        # img, morph_features, textures_features, labels = batch
         original_labels = labels.reshape(-1, 1).float()
         if len(img) == 1:
             print("Found length 0")
             return
 
-        y_hat = self(img, morph_features, textures_features)
+        y_hat = self(img)
+        # y_hat = self(img, morph_features, textures_features)
         loss = self.loss(y_hat.float(), original_labels)
 
         self.log("test_loss", loss, sync_dist=True)

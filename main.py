@@ -506,7 +506,7 @@ def train(gene):
                              persistent_workers=True, pin_memory=True)
 
     model = model.to(device)
-    trainer = pl.Trainer(max_epochs=5, devices="auto", accelerator="auto", profiler="pytorch",
+    trainer = pl.Trainer(max_epochs=1, devices="auto", accelerator="auto", profiler="simple",
                          num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
                          default_root_dir=HostConfiguration.CHECKPOINTS_PATH.format(gene=gene))
     trainer.fit(model, train_loader, val_loader)
