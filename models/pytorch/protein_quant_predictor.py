@@ -39,9 +39,6 @@ class ProteinQuantPredictor(pl.LightningModule):
     def forward(self, img, morph_features, textures_features):
         image_features = self.image_features(img)
         morph_features = self.morphological_features(morph_features)
-        # print("image features: ", image_features.shape)
-        # print("morph features: ", morph_features.shape)
-        # print("texture features: ", textures_features.shape)
         x = torch.concatenate([image_features, morph_features, textures_features], dim=1).float()
         x = F.relu(self.fc1(x))
         pred = self.fc2(x)
@@ -54,10 +51,6 @@ class ProteinQuantPredictor(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         img, morph_features, textures_features, labels = batch
-        # print("img shape: {}".format(img.shape))
-        # print("morph shape: {}".format(morph_features.shape))
-        # print("texture shape: {}".format(textures_features.shape))
-        # print("labels shape: {}".format(labels.shape))
         original_labels = labels.reshape(-1, 1).float()
         if len(img) == 1:
             print("Found length 0")

@@ -478,6 +478,12 @@ def train(gene):
                                             # transforms.Resize(size=(224, 224)),
                                             transforms.ToTensor(),
                                             transforms.Normalize(mean=[0.], std=[255.])])
+    gray_to_rgb_transforms = transforms.Compose([
+        transforms.ToPILImage(),  # convert tensor to PIL Image
+        transforms.Grayscale(num_output_channels=3),  # convert grayscale to RGB
+        transforms.ToTensor(),  # convert PIL Image to tensor
+    ])
+
     test_proportion_size = 0.1
     val_proportion_size = 0.1
 
@@ -490,12 +496,10 @@ def train(gene):
         json.dump(test_set, f)
     print("Test: ", test_set)
 
-    train_dataset = TilesDataset(tiles_directory_path, transform_compose, train_set)
-    val_dataset = TilesDataset(tiles_directory_path, transform_compose, val_set)
-    test_dataset = TilesDataset(tiles_directory_path, transform_compose, test_set)
-    # todo - maybe delete collate_fn
-    # todo - scan through all images and check for dimension, maybe 1 channel ?
-    train_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers,  # , collate_fn=my_collate_fn,
+    train_dataset = TilesDataset(tiles_directory_path, transform_compose, gray_to_rgb_transforms, train_set)
+    val_dataset = TilesDataset(tiles_directory_path, transform_compose, gray_to_rgb_transforms, val_set)
+    test_dataset = TilesDataset(tiles_directory_path, transform_compose, gray_to_rgb_transforms, test_set)
+    train_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers,
                               persistent_workers=True, pin_memory=True, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=16, num_workers=num_of_workers,
                             persistent_workers=True, pin_memory=True)
@@ -503,7 +507,7 @@ def train(gene):
                              persistent_workers=True, pin_memory=True)
 
     model = model.to(device)
-    trainer = pl.Trainer(max_epochs=5, devices="auto", accelerator="auto",
+    trainer = pl.Trainer(max_epochs=5, devices="auto", accelerator="auto", profiler="simple",
                          num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
                          default_root_dir=HostConfiguration.CHECKPOINTS_PATH.format(gene=gene))
     trainer.fit(model, train_loader, val_loader)
