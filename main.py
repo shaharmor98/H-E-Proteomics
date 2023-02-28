@@ -477,7 +477,11 @@ transform_compose = transforms.Compose([
     transforms.Resize(size=(224, 224)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.], std=[255.])])
-
+gray_to_rgb_transforms = transforms.Compose([
+    transforms.ToPILImage(),  # convert tensor to PIL Image
+    transforms.Grayscale(num_output_channels=3),  # convert grayscale to RGB
+    transforms.ToTensor(),  # convert PIL Image to tensor
+])
 results = {}
 ckpt_path = "/home/shaharmor98/checkpoints/hybrid/STAT1/model-erosion.ckpt"
 model = ProteinQuantPredictor.load_from_checkpoint(ckpt_path)
@@ -489,7 +493,7 @@ for i, test_id in enumerate(test_ids):
     if not key_name in results:
         results[key_name] = []
     print("{}: Starting test_id: {}".format(i, test_id))
-    dataset = TilesDataset(tiles_directory, transform_compose, None, test_id)
+    dataset = TilesDataset(tiles_directory, transform_compose, gray_to_rgb_transforms, test_id)
     predictions = trainer.predict(model,
                                   dataloaders=DataLoader(dataset, num_workers=int(multiprocessing.cpu_count()),
                                                          pin_memory=True, persistent_workers=True))
