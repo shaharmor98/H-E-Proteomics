@@ -44,7 +44,8 @@ class ProteinQuantPredictor(pl.LightningModule):
         num_ftrs = model._fc.in_features
         model._fc = nn.Linear(num_ftrs, 1000)
 
-    def forward(self, img, morph_features, textures_features):
+    def forward(self, img):
+        # def forward(self, img, morph_features, textures_features):
         image_features = self.image_features(img)
         # morph_features = self.morphological_features(morph_features)
         # x = torch.concatenate([image_features, morph_features, textures_features], dim=1).float()
