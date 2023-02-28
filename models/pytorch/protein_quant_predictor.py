@@ -50,10 +50,11 @@ class ProteinQuantPredictor(pl.LightningModule):
         # morph_features = self.morphological_features(morph_features)
         # x = torch.concatenate([image_features, morph_features, textures_features], dim=1).float()
         # x = torch.concatenate([image_features, morph_features, textures_features], dim=1).float()
-        x = F.relu(self.fc1(image_features))
+        # x = F.relu(self.fc1(image_features))
         # x = F.relu(self.fc1(x))
-        pred = self.fc2(x)
-        return pred
+        # pred = self.fc2(x)
+        return image_features
+        # return pred
 
     def predict_step(self, batch, batch_idx, dataloader_idx: int = 0):
         x, label = batch
