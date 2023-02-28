@@ -16,8 +16,8 @@ class ProteinQuantPredictor(pl.LightningModule):
         self.morphological_features = EfficientNet.from_pretrained('efficientnet-b0')
         self.freeze_architecture(self.image_features)
         self.freeze_architecture(self.morphological_features)
-        self.fc1 = torch.nn.Linear(2, 2)
-        self.fc2 = torch.nn.Linear(2, 1)
+        self.fc1 = torch.nn.Linear(2000, 256)
+        self.fc2 = torch.nn.Linear(256, 1)
         # self.fc1 = torch.nn.Linear(1000 + 1000 + textures_features_size, 256)
         # self.fc2 = torch.nn.Linear(256, 1)
         self.learning_rate = 0.001
@@ -43,8 +43,8 @@ class ProteinQuantPredictor(pl.LightningModule):
 
         # Modify the last layer for fine-tuning
         num_ftrs = model._fc.in_features
-        model._fc = nn.Linear(num_ftrs, 1)
-        # model._fc = nn.Linear(num_ftrs, 1000)
+        # model._fc = nn.Linear(num_ftrs, 1)
+        model._fc = nn.Linear(num_ftrs, 1000)
 
     def forward(self, img, morph):
         # def forward(self, img, morph_features, textures_features):
