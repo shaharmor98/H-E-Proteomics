@@ -535,6 +535,7 @@ def train(gene):
     test_proportion_size = 0.15
     val_proportion_size = 0.15
 
+    print("Starting with total: {} values".format(len(gene_slides_with_labels)))
     train_set, test_set = get_random_split(gene_slides_with_labels, test_proportion_size)
     print("Train set: {}, Test set: {} ".format(len(train_set), len(test_set)))
     train_set, val_set = get_random_split(train_set, val_proportion_size)
@@ -555,7 +556,7 @@ def train(gene):
                              persistent_workers=True, pin_memory=True)
 
     model = model.to(device)
-    trainer = pl.Trainer(max_epochs=1, max_steps=100, devices="auto", accelerator="auto", profiler="simple",
+    trainer = pl.Trainer(max_epochs=1, devices="auto", accelerator="auto",
                          num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
                          default_root_dir=HostConfiguration.CHECKPOINTS_PATH.format(gene=gene))
     trainer.fit(model, train_loader, val_loader)
