@@ -42,7 +42,8 @@ class ProteinQuantPredictor(pl.LightningModule):
 
         # Modify the last layer for fine-tuning
         num_ftrs = model._fc.in_features
-        model._fc = nn.Linear(num_ftrs, 1000)
+        model._fc = nn.Linear(num_ftrs, 1)
+        # model._fc = nn.Linear(num_ftrs, 1000)
 
     def forward(self, img):
         # def forward(self, img, morph_features, textures_features):

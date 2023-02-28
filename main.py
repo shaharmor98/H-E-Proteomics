@@ -445,10 +445,37 @@ def get_random_split(items, proportion):
     return {k: items[k] for k in train_keys}, {k: items[k] for k in test_keys}
 
 
-def my_collate_fn(data):
-    # TODO: Implement your function
-    # But I guess in your case it should be:
-    return tuple(data)
+def eval_model(gene):
+    tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
+                                                               patch_size=HostConfiguration.PATCH_SIZE)
+    with open(HostConfiguration.TEST_IDS_FILE.format(gene=gene), 'r') as f:
+        ids = json.load(f)
+        test_ids = []
+        for k, v in ids.items():
+            test_ids.append((k, v))
+
+    transform_compose = transforms.Compose([
+        # transform_compose = transforms.Compose([transforms.ToPILImage(),
+        transforms.Resize(size=(224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.], std=[255.])])
+
+    results = {}
+    ckpt_path = ""
+    model = ProteinQuantClassifier.load_from_checkpoint(ckpt_path)
+    model_name = os.path.basename(ckpt_path)
+    print("Starting {}".format(model_name))
+    for test_id in test_ids:
+        if not test_id[0] in results:
+            results[test_id[0]] = []
+        print("Starting test_id: ", test_id)
+        dataset = TilesDataset(tiles_directory, transform_compose, None, [test_id])
+        trainer = pl.Trainer(devices=1, accelerator="auto")
+        predictions = trainer.predict(model,
+                                      dataloaders=DataLoader(dataset, num_workers=int(multiprocessing.cpu_count()),
+                                                             pin_memory=True, persistent_workers=True))
+        predictions = [p.item() for p in predictions]
+        results[test_id[0]].append(predictions)
 
 
 def train(gene):
@@ -484,8 +511,8 @@ def train(gene):
         transforms.ToTensor(),  # convert PIL Image to tensor
     ])
 
-    test_proportion_size = 0.1
-    val_proportion_size = 0.1
+    test_proportion_size = 0.15
+    val_proportion_size = 0.15
 
     train_set, test_set = get_random_split(gene_slides_with_labels, test_proportion_size)
     print("Train set: {}, Test set: {} ".format(len(train_set), len(test_set)))
@@ -500,7 +527,7 @@ def train(gene):
     val_dataset = TilesDataset(tiles_directory_path, transform_compose, gray_to_rgb_transforms, val_set)
     test_dataset = TilesDataset(tiles_directory_path, transform_compose, gray_to_rgb_transforms, test_set)
     train_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers,
-                              persistent_workers=True, pin_memory=True)  # , prefetch_factor=64)
+                              persistent_workers=True, pin_memory=True, shuffle=True)  # , prefetch_factor=64)
     val_loader = DataLoader(val_dataset, batch_size=16, num_workers=num_of_workers,
                             persistent_workers=True, pin_memory=True)
     test_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers,
