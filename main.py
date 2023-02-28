@@ -557,7 +557,8 @@ def train(gene):
     val_dataset = TilesDataset(tiles_directory_path, transform_compose, gray_to_rgb_transforms, val_set)
     test_dataset = TilesDataset(tiles_directory_path, transform_compose, gray_to_rgb_transforms, test_set)
     train_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers,
-                              persistent_workers=True, pin_memory=True, shuffle=True)  # , prefetch_factor=64)
+                              persistent_workers=True, pin_memory=True, shuffle=True,
+                              prefetch_factor=64)  # , prefetch_factor=64)
     val_loader = DataLoader(val_dataset, batch_size=16, num_workers=num_of_workers,
                             persistent_workers=True, pin_memory=True)
     test_loader = DataLoader(train_dataset, batch_size=16, num_workers=num_of_workers,
