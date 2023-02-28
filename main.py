@@ -461,7 +461,7 @@ def eval_model(gene):
         transforms.Normalize(mean=[0.], std=[255.])])
 
     results = {}
-    ckpt_path = ""
+    ckpt_path = "/home/shaharmor98/git/H-E-Proteomics/proteomics-project/hl59wrjk/checkpoints/model.ckpt"
     model = ProteinQuantClassifier.load_from_checkpoint(ckpt_path)
     model_name = os.path.basename(ckpt_path)
     print("Starting {}".format(model_name))
@@ -477,6 +477,7 @@ def eval_model(gene):
         predictions = [p.item() for p in predictions]
         results[test_id[0]].append(predictions)
 
+    return results
 
 def train(gene):
     wandb_logger = WandbLogger(project="proteomics-project", log_model=True)
