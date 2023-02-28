@@ -433,26 +433,44 @@ def spearman_correlation_test(gene):
     return samples_average, normalized_records
 
 
-def get_random_split(items, proportion):
+def get_random_split(dataset, proportion):
     """
     Input expected to be a dict
-    """
-    keys = list(items.keys())
-    random.shuffle(keys)
-    split_idx = int(len(keys) * proportion)
-    test_keys = keys[:split_idx]
-    train_keys = keys[split_idx:]
-    return {k: items[k] for k in train_keys}, {k: items[k] for k in test_keys}
 
+    255 elements.
+    for every percentile- 3 variables
+    """
+    values = np.asarray(list(dataset.values()))
+    train_set = {}
+    test_set = {}
+
+    def items_within(low_percentile, values, dataset):
+        low = np.percentile(values, low_percentile * 10)
+        high = np.percentile(values, (low_percentile + 1) * 10)
+        range_values = {k: v for k, v in dataset.items() if (v >= low) and (v <= high)}
+        keys = list(range_values.keys())
+        random.shuffle(keys)
+        split_idx = int(len(keys) * proportion) + 1
+        test_keys = keys[:split_idx]
+        train_keys = keys[split_idx:]
+        return {k: dataset[k] for k in train_keys}, {k: dataset[k] for k in test_keys}
+
+    for i in range(10):
+        intermediate_train, intermediate_test = items_within(i, values, dataset)
+        train_set.update(intermediate_train)
+        test_set.update(intermediate_test)
+    return train_set, test_set
 
 def eval_model(gene):
     tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
                                                                patch_size=HostConfiguration.PATCH_SIZE)
+
+
     with open(HostConfiguration.TEST_IDS_FILE.format(gene=gene), 'r') as f:
         ids = json.load(f)
         test_ids = []
         for k, v in ids.items():
-            test_ids.append((k, v))
+            test_ids.append({k: v})
 
     transform_compose = transforms.Compose([
         # transform_compose = transforms.Compose([transforms.ToPILImage(),
@@ -462,22 +480,24 @@ def eval_model(gene):
 
     results = {}
     ckpt_path = "/home/shaharmor98/git/H-E-Proteomics/proteomics-project/hl59wrjk/checkpoints/model.ckpt"
-    model = ProteinQuantClassifier.load_from_checkpoint(ckpt_path)
+    model = ProteinQuantPredictor.load_from_checkpoint(ckpt_path)
     model_name = os.path.basename(ckpt_path)
     print("Starting {}".format(model_name))
     for test_id in test_ids:
-        if not test_id[0] in results:
-            results[test_id[0]] = []
+        key_name = list(test_id.keys())[0]
+        if not key_name in results:
+            results[key_name] = []
         print("Starting test_id: ", test_id)
-        dataset = TilesDataset(tiles_directory, transform_compose, None, [test_id])
+        dataset = TilesDataset(tiles_directory, transform_compose, None, test_id)
         trainer = pl.Trainer(devices=1, accelerator="auto")
         predictions = trainer.predict(model,
                                       dataloaders=DataLoader(dataset, num_workers=int(multiprocessing.cpu_count()),
                                                              pin_memory=True, persistent_workers=True))
         predictions = [p.item() for p in predictions]
-        results[test_id[0]].append(predictions)
+        results[key_name].append(predictions)
 
     return results
+
 
 def train(gene):
     wandb_logger = WandbLogger(project="proteomics-project", log_model=True)

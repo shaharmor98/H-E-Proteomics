@@ -10,6 +10,7 @@ from host_configuration import HostConfiguration
 class DiaToMetadata(object):
     def __init__(self, dia_excel_path, metadata_excel_path, tiles_directory):
         if os.path.exists(HostConfiguration.DIA_PARTIAL_GENES_FILE_PATH):
+            print("Found existing partial df")
             self._dia_df = pd.read_excel(HostConfiguration.DIA_PARTIAL_GENES_FILE_PATH)
         else:
             self._dia_df = pd.read_excel(dia_excel_path, usecols=range(300))
