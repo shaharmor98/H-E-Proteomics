@@ -36,6 +36,13 @@ class ProteinQuantPredictor(pl.LightningModule):
             if not '_fc' in name:  # exclude the final layer
                 param.requires_grad = False
 
+        for param in model._fc.parameters():
+            param.requires_grad = True
+
+        # Modify the last layer for fine-tuning
+        num_ftrs = model._fc.in_features
+        model._fc = nn.Linear(num_ftrs, 1000)
+
     def forward(self, img, morph_features, textures_features):
         image_features = self.image_features(img)
         morph_features = self.morphological_features(morph_features)
@@ -64,15 +71,17 @@ class ProteinQuantPredictor(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         # this is the validation loop
-        x, original_labels = batch
-        original_labels = original_labels.reshape(-1, 1).float()
-        if len(x[0]) == 1:
+        img, morph_features, textures_features, labels = batch
+        original_labels = labels.reshape(-1, 1).float()
+        if len(img) == 1:
+            print("Found length 0")
             return
-        y_hat = self(x)
-        val_loss = self.loss(y_hat.float(), original_labels)
 
-        self.log('val_loss', val_loss, prog_bar=True, sync_dist=True)
-        return {"loss": val_loss}
+        y_hat = self(img, morph_features, textures_features)
+        loss = self.loss(y_hat.float(), original_labels)
+
+        self.log('val_loss', loss, prog_bar=True, sync_dist=True)
+        return {"loss": loss}
 
     def validation_epoch_end(self, outputs):
         losses = []
@@ -83,12 +92,16 @@ class ProteinQuantPredictor(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         # this is the test loop
-        x, original_labels = batch
-        original_labels = original_labels.reshape(-1, 1).float()
-        y_hat = self(x)
-        test_loss = self.loss(y_hat.float(), original_labels)
+        img, morph_features, textures_features, labels = batch
+        original_labels = labels.reshape(-1, 1).float()
+        if len(img) == 1:
+            print("Found length 0")
+            return
 
-        self.log("test_loss", test_loss, sync_dist=True)
+        y_hat = self(img, morph_features, textures_features)
+        loss = self.loss(y_hat.float(), original_labels)
+
+        self.log("test_loss", loss, sync_dist=True)
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)

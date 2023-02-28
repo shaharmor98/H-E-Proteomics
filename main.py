@@ -455,8 +455,7 @@ def train(gene):
     wandb_logger = WandbLogger(project="proteomics-project", log_model=True)
     device = "cuda"
 
-    torch.manual_seed(42)
-    seed_everything(42)
+    seed_everything(42, workers=True)
     random.seed(42)
 
     random_image = np.random.rand(224, 224, 3)
@@ -507,7 +506,7 @@ def train(gene):
                              persistent_workers=True, pin_memory=True)
 
     model = model.to(device)
-    trainer = pl.Trainer(max_epochs=5, devices="auto", accelerator="auto",  # , profiler="simple",
+    trainer = pl.Trainer(max_epochs=5, devices="auto", accelerator="auto",  profiler="pytorch",
                          num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
                          default_root_dir=HostConfiguration.CHECKPOINTS_PATH.format(gene=gene))
     trainer.fit(model, train_loader, val_loader)
