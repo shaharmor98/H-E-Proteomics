@@ -13,12 +13,13 @@ class ProteinQuantPredictor(pl.LightningModule):
         super(ProteinQuantPredictor, self).__init__()
 
         self.image_features = EfficientNet.from_pretrained('efficientnet-b0')
-        # self.morphological_features = EfficientNet.from_pretrained('efficientnet-b0')
+        self.morphological_features = EfficientNet.from_pretrained('efficientnet-b0')
         self.freeze_architecture(self.image_features)
-        # self.freeze_architecture(self.morphological_features)
-        self.fc1 = torch.nn.Linear(1000, 256)
+        self.freeze_architecture(self.morphological_features)
+        self.fc1 = torch.nn.Linear(2, 2)
+        self.fc2 = torch.nn.Linear(2, 1)
         # self.fc1 = torch.nn.Linear(1000 + 1000 + textures_features_size, 256)
-        self.fc2 = torch.nn.Linear(256, 1)
+        # self.fc2 = torch.nn.Linear(256, 1)
         self.learning_rate = 0.001
         self._device = device
         self.loss = nn.MSELoss()
@@ -45,16 +46,19 @@ class ProteinQuantPredictor(pl.LightningModule):
         model._fc = nn.Linear(num_ftrs, 1)
         # model._fc = nn.Linear(num_ftrs, 1000)
 
-    def forward(self, img):
+    def forward(self, img, morph):
         # def forward(self, img, morph_features, textures_features):
         image_features = self.image_features(img)
-        # morph_features = self.morphological_features(morph_features)
+        morph_features = self.morphological_features(morph)
         # x = torch.concatenate([image_features, morph_features, textures_features], dim=1).float()
         # x = torch.concatenate([image_features, morph_features, textures_features], dim=1).float()
         # x = F.relu(self.fc1(image_features))
         # x = F.relu(self.fc1(x))
         # pred = self.fc2(x)
-        return image_features
+        x = torch.concatenate([image_features, morph_features], dim=1).float()
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
         # return pred
 
     def predict_step(self, batch, batch_idx, dataloader_idx: int = 0):
@@ -63,14 +67,14 @@ class ProteinQuantPredictor(pl.LightningModule):
         return y_hat
 
     def training_step(self, batch, batch_idx):
-        img, labels = batch
+        img, morph, labels = batch
         # img, morph_features, textures_features, labels = batch
         original_labels = labels.reshape(-1, 1).float()
         if len(img) == 1:
             print("Found length 0")
             return
 
-        y_hat = self(img)
+        y_hat = self(img, morph)
         # y_hat = self(img, morph_features, textures_features)
         loss = self.loss(y_hat.float(), original_labels)
 
@@ -79,14 +83,14 @@ class ProteinQuantPredictor(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         # this is the validation loop
-        img, labels = batch
+        img, morph, labels = batch
         # img, morph_features, textures_features, labels = batch
         original_labels = labels.reshape(-1, 1).float()
         if len(img) == 1:
             print("Found length 0")
             return
 
-        y_hat = self(img)
+        y_hat = self(img, morph)
         # y_hat = self(img, morph_features, textures_features)
         loss = self.loss(y_hat.float(), original_labels)
 
@@ -102,19 +106,19 @@ class ProteinQuantPredictor(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         # this is the test loop
-        img, labels = batch
+        img, morph, labels = batch
         # img, morph_features, textures_features, labels = batch
         original_labels = labels.reshape(-1, 1).float()
         if len(img) == 1:
             print("Found length 0")
             return
 
-        y_hat = self(img)
+        y_hat = self(img, morph)
         # y_hat = self(img, morph_features, textures_features)
         loss = self.loss(y_hat.float(), original_labels)
 
         self.log("test_loss", loss, sync_dist=True)
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
+        optimizer = optim.Adagrad(self.parameters(), lr=self.learning_rate)
         return optimizer

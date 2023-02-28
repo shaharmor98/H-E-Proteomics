@@ -479,7 +479,7 @@ def eval_model(gene):
         transforms.Normalize(mean=[0.], std=[255.])])
 
     results = {}
-    ckpt_path = "/home/shaharmor98/git/H-E-Proteomics/proteomics-project/hl59wrjk/checkpoints/model.ckpt"
+    ckpt_path = "/home/shaharmor98/checkpoints/hybrid/STAT1/model.ckpt"
     model = ProteinQuantPredictor.load_from_checkpoint(ckpt_path)
     model_name = os.path.basename(ckpt_path)
     print("Starting {}".format(model_name))
@@ -496,7 +496,15 @@ def eval_model(gene):
         predictions = [p.item() for p in predictions]
         results[key_name].append(predictions)
 
-    return results
+        actual = []
+        pred = []
+
+        for t in test_ids:
+            k = list(t.keys())[0]
+            actual.append(t[k])
+            pred.append(np.mean(results[k]))
+        scipy.stats.spearmanr(pred, actual)
+        return results
 
 
 def train(gene):
@@ -521,11 +529,11 @@ def train(gene):
                                  tiles_directory_path)
     gene_slides_with_labels = dia_metadata.get_continuous_normalized_records(gene)
 
-    transform_compose = transforms.Compose([
-        # transform_compose = transforms.Compose([transforms.ToPILImage(),
-        transforms.Resize(size=(224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.], std=[255.])])
+    # transform_compose = transforms.Compose([
+    transform_compose = transforms.Compose([transforms.ToPILImage(),
+                                            transforms.Resize(size=(224, 224)),
+                                            transforms.ToTensor(),
+                                            transforms.Normalize(mean=[0.], std=[255.])])
     gray_to_rgb_transforms = transforms.Compose([
         transforms.ToPILImage(),  # convert tensor to PIL Image
         transforms.Grayscale(num_output_channels=3),  # convert grayscale to RGB
@@ -560,7 +568,7 @@ def train(gene):
                          num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
                          default_root_dir=HostConfiguration.CHECKPOINTS_PATH.format(gene=gene))
     trainer.fit(model, train_loader, val_loader)
-    trainer.save_checkpoint(os.path.join(HostConfiguration.CHECKPOINTS_PATH.format(gene=gene), "model.ckpt"))
+    trainer.save_checkpoint(os.path.join(HostConfiguration.CHECKPOINTS_PATH.format(gene=gene), "model-erosion.ckpt"))
 
 
 def main():

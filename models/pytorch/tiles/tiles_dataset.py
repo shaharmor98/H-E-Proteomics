@@ -42,10 +42,10 @@ class TilesDataset(Dataset):
     def __getitem__(self, index):
         # img_path = "/Users/shahar.mor/git/H-E-Proteomics/data/images/zoom_20_size_512/PD31107a.ndpi_65_69.jpeg"
         img_path = os.path.join(self.root_dir, self._files[index])
-        # img = io.imread(img_path)
-        # img = skimage.transform.resize(img, (224, 224), preserve_range=True).astype('uint8')
-        # morph_features = self.morphological_feature.extract(img)
-        # morph_features = self.gray2rgb_transform(torch.from_numpy(morph_features[0].astype(np.float32)))
+        img = io.imread(img_path)
+        img = skimage.transform.resize(img, (224, 224), preserve_range=True).astype('uint8')
+        morph_features = self.morphological_feature.extract(img)
+        morph_features = self.gray2rgb_transform(torch.from_numpy(morph_features.astype(np.float32)))
         # textures_features = torch.from_numpy(self.texture_features.extract(img))
         # if textures_features.shape != torch.Size([15, ]):
         #     if textures_features.shape[0] > 15:
@@ -61,5 +61,5 @@ class TilesDataset(Dataset):
         slide_id = tile_slide_name[:tile_slide_name.find(".")]
         tile_true_label = self._ids[slide_id]
 
-        return img, tile_true_label
+        return img, morph_features, tile_true_label
         # return img, morph_features, textures_features, tile_true_label
