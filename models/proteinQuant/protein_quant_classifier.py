@@ -55,7 +55,6 @@ class ProteinQuantClassifier(pl.LightningModule):
         val_loss = self.loss(y_hat.float(), original_labels)
         accuracy = self.accuracy(y_hat, original_labels)
 
-        # TODO - added sync_dist
         self.log('val_loss', val_loss, prog_bar=True, sync_dist=True)
         self.log('val_acc', accuracy, prog_bar=True, sync_dist=True)
         return {"loss": val_loss, "acc": accuracy}
