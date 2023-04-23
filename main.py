@@ -2,6 +2,7 @@ import argparse
 import json
 import multiprocessing
 import os.path
+import random
 
 import numpy as np
 import pytorch_lightning as pl
@@ -9,9 +10,7 @@ import scipy
 import torch
 from PIL import Image
 from lightning_lite import seed_everything
-from pytorch_lightning.callbacks import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
-from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
@@ -22,23 +21,7 @@ from models.proteinQuant.cross_validation.tiles_kfold_data_module import TilesKF
 from models.proteinQuant.protein_quant_classifier import ProteinQuantClassifier
 from models.proteinQuant.tiles_dataset import TilesDataset
 from preprocessor import Preprocessor
-
-import json
-import multiprocessing
-import random
-
-import torch
-from torch import nn, optim
-from torch.utils.data import DataLoader
-
-from host_configuration import HostConfiguration
-from models.pytorch.morpohlogical_extractor import MorphologicalFeatureExtractor
-# from models.pytorch.protein_quant_predictor import ProteinQuantPredictor
-# from models.pytorch.texture_extractor import TextureFeaturesExtractor
-# from models.pytorch.tiles.tiles_dataset import TilesDataset
-from torchvision import transforms
-import wandb
-from tqdm import tqdm
+from sklearn.metrics import confusion_matrix
 
 
 def run(model):
@@ -188,6 +171,40 @@ def pam50_train(args):
 def prepare_train_env(gene):
     if not os.path.exists(HostConfiguration.CHECKPOINTS_PATH.format(gene=gene)):
         os.makedirs(HostConfiguration.CHECKPOINTS_PATH.format(gene=gene))
+
+
+def confusion_matrix_analysis(gene):
+    tiles_directory = HostConfiguration.TILES_DIRECTORY.format(zoom_level=HostConfiguration.ZOOM_LEVEL,
+                                                               patch_size=HostConfiguration.PATCH_SIZE)
+    transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
+                                            transforms.ToTensor(),
+                                            transforms.Normalize(mean=[0.], std=[255.])])
+    dia_metadata = DiaToMetadata(HostConfiguration.DIA_GENES_FILE_PATH, HostConfiguration.RNR_METADATA_FILE_PATH,
+                                 tiles_directory)
+    normalized_records = dia_metadata.get_normalized_gene_records(gene_name=gene)
+    with open(HostConfiguration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), 'r') as f:
+        predictions = json.load(f)
+
+    with open(HostConfiguration.TEST_IDS_FILE.format(gene=gene), 'r') as f:
+        ids = json.load(f)
+        test_ids = []
+        for k, v in ids.items():
+            test_ids.append((k, v))
+
+    actual_prediction = []
+    for slide_id, _ in test_ids:
+        actual_prediction.append(normalized_records[slide_id])
+
+    # Method B- applying threshold and then classify by majority
+    preds = []
+    for test_id in test_ids:
+        pred = predictions[test_id[0]]
+        dataset = TilesDataset(tiles_directory, transform_compose, [test_id], caller="Prediction dataset")
+        threshold_predictions = np.where(np.asarray(pred) > 0.5, 1, 0)
+        averaged_tile = np.mean(threshold_predictions, axis=0)
+        total = np.sum(np.where(np.asarray(averaged_tile) > 0.5, 1, 0), axis=0)
+        ratio = total / dataset.get_num_of_files()
+        preds.append(ratio)
 
 
 def inference(gene):
@@ -343,6 +360,12 @@ def analysis(gene):
 
 
 """
+Method A: MKI67: correlation=0.6363636363636362, pvalue=0.04791172612997547)
+Method B: MKI67: correlation=0.6363636363636362, pvalue=0.04791172612997547)
+Method C: MKI67: correlation=0.6242424242424242, pvalue=0.053717767217167395)
+Method D: MKI67: correlation=0.6363636363636362, pvalue=0.04791172612997547)
+Method E: MKI67: correlation=0.6242424242424242, pvalue=0.053717767217167395)
+
 Method A:  NFKB2: correlation=-0.07878787878787878, pvalue=0.8287173946974606)
 Method B:  NFKB2: correlation=-0.07878787878787878, pvalue=0.8287173946974606)
 Method C:  NFKB2: correlation=-0.07878787878787878, pvalue=0.8287173946974606)
@@ -511,6 +534,7 @@ def eval_model(gene):
         # scipy.stats.spearmanr(pred, actual)
     return results
     """
+
 
 def train(gene):
     """
