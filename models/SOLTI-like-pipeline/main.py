@@ -3,11 +3,17 @@ import multiprocessing
 import os
 
 from lightning_lite import seed_everything
+from pytorch_lightning.callbacks import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
+from torch.utils.data import DataLoader
 from torchvision import transforms
 from data_splitter import DataSplitter
 from configuration import Configuration
 from data_parser.dia_to_metadata_parser import DiaToMetadata
+from models.proteinQuant.protein_quant_classifier import ProteinQuantClassifier
+import pytorch_lightning as pl
+
+from models.proteinQuant.tiles_dataset import TilesDataset
 
 transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
                                         transforms.ToTensor(),
@@ -50,9 +56,24 @@ def train(args, gene):
 
     data_splitter = DataSplitter(dia_metadata)
     wandb_logger = WandbLogger(project="proteomics-project", log_model=True)
-    num_of_workers = int(multiprocessing.cpu_count())
+    num_workers = int(multiprocessing.cpu_count())
 
     extreme, ood = dia_metadata.split_by_expression_level(gene)
+    train_instances, valid_instances = data_splitter.split_train_val(extreme)
+    model = ProteinQuantClassifier(device).to(device)
+    trainer = pl.Trainer(max_epochs=5, devices="auto", accelerator="auto",
+                         num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
+                         callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")],
+                         default_root_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene))
+    train_dataset = TilesDataset(tiles_directory_path, transform_compose, train_instances)
+    validation_dataset = TilesDataset(tiles_directory_path, transform_compose, valid_instances)
+
+    train_loader = DataLoader(train_dataset, batch_size=Configuration.BATCH_SIZE, num_workers=num_workers,
+                              persistent_workers=True, pin_memory=True, shuffle=True)
+    validation_loader = DataLoader(validation_dataset, batch_size=Configuration.BATCH_SIZE, num_workers=num_workers,
+                                   persistent_workers=True, pin_memory=True)
+
+    trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=validation_loader)
 
 
 def main():

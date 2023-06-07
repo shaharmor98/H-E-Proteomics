@@ -21,8 +21,6 @@ class ProteinQuantClassifier(pl.LightningModule):
 
     def forward(self, x):
         x = self.model(x)
-        # if isinstance(x, torch.Tensor):
-        #     x = self.fc(x)
         if isinstance(x, InceptionOutputs):
             x = x[0]
         return x
@@ -57,7 +55,7 @@ class ProteinQuantClassifier(pl.LightningModule):
 
         self.log('val_loss', val_loss, prog_bar=True, sync_dist=True)
         self.log('val_acc', accuracy, prog_bar=True, sync_dist=True)
-        return {"loss": val_loss, "acc": accuracy}
+        return {"val_loss": val_loss, "acc": accuracy}
 
     def validation_epoch_end(self, outputs):
         losses = []

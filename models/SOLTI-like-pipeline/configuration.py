@@ -16,3 +16,4 @@ class Configuration(object):
     DIA_PARTIAL_GENES_FILE_PATH = os.path.join(os.path.expanduser("~"), "proteomics_from_janne", "Labels_etc",
                                                "partial.xlsx")
     N_ROUNDS = 5
+    BATCH_SIZE = 32
