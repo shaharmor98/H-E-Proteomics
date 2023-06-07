@@ -15,5 +15,7 @@ class Configuration(object):
                                        "SCANB_TNBC_diaPASEF_SN16_E104.xlsx")
     DIA_PARTIAL_GENES_FILE_PATH = os.path.join(os.path.expanduser("~"), "proteomics_from_janne", "Labels_etc",
                                                "partial.xlsx")
+    PREDICTIONS_SUMMARY_FILE = os.path.join(CHECKPOINTS_PATH, "predictions.txt")
+    OOD_FILE_PATH = os.path.join(CHECKPOINTS_PATH, "ood.txt")
     N_ROUNDS = 5
     BATCH_SIZE = 32
