@@ -68,14 +68,13 @@ def train(args, gene):
                              num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
                              callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")],
                              default_root_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene+"-round-"+str(n_round)))
-        train_dataset = TilesDataset(tiles_directory_path, transform_compose, train_instances)
-        validation_dataset = TilesDataset(tiles_directory_path, transform_compose, valid_instances)
+        train_dataset = TilesDataset(tiles_directory_path, transform_compose, train_instances, "Train-dataset")
+        validation_dataset = TilesDataset(tiles_directory_path, transform_compose, valid_instances, "Val-dataset")
 
         train_loader = DataLoader(train_dataset, batch_size=Configuration.BATCH_SIZE, num_workers=num_workers,
                                   persistent_workers=True, pin_memory=True, shuffle=True)
         validation_loader = DataLoader(validation_dataset, batch_size=Configuration.BATCH_SIZE, num_workers=num_workers,
                                        persistent_workers=True, pin_memory=True)
-    
         trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=validation_loader)
 
 
@@ -84,16 +83,17 @@ def main():
     args = parser.parse_args()
 
     if args.train:
+        print("Yallha")
         seed_everything(Configuration.SEED)
         for gene in Configuration.GENES:
             prepare_train_env(gene)
             train(args, gene)
-            inference(args.gene)
+            # inference(args.gene)
 
-    elif args.inference:
-        inference(args.gene)
-    elif args.analysis:
-        analysis(args.gene)
+    # elif args.inference:
+    #     inference(args.gene)
+    # elif args.analysis:
+    #     analysis(args.gene)
 
 
 if __name__ == '__main__':
