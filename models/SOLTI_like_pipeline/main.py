@@ -62,7 +62,7 @@ def train(args, gene):
 
     extreme, ood = dia_metadata.split_by_expression_level(gene)
 
-    with open(Configuration.OOD_FILE_PATH.format(gene), "w") as f:
+    with open(Configuration.OOD_FILE_PATH.format(gene=gene), "w") as f:
         json.dump(ood, f)
 
     for n_round in range(Configuration.N_ROUNDS):
