@@ -60,7 +60,7 @@ class ProteinQuantClassifier(pl.LightningModule):
     def validation_epoch_end(self, outputs):
         losses = []
         for output in outputs:
-            losses.append(output["loss"].cpu())
+            losses.append(output["val_loss"].cpu())
 
         self.log("val_epoch_loss", np.asarray(losses).mean(), sync_dist=True)
 
