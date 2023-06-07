@@ -12,8 +12,8 @@ class DataSplitter(object):
         Expecting input to be a list of lists, first element is slide name, second is slide label
         """
 
-        high_instances = [slide for slide, label in instances if label == 1]
-        low_instances = [slide for slide, label in instances if label == 0]
+        high_instances = [slide for slide, label in instances.items() if label == 1]
+        low_instances = [slide for slide, label in instances.items() if label == 0]
 
         validation_set_size = int(len(high_instances) * split_size)
 
