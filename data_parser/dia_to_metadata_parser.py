@@ -123,7 +123,6 @@ class DiaToMetadata(object):
 
         return slide_ids
 
-
     def get_gene_slides_with_labels(self, gene_name):
         tnbc = self.get_tnbc_unique_df()
         ids = self.get_existing_slides_ids()
