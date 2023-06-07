@@ -4,9 +4,14 @@ import os
 
 from lightning_lite import seed_everything
 from pytorch_lightning.loggers import WandbLogger
-
+from torchvision import transforms
+from data_splitter import DataSplitter
 from configuration import Configuration
 from data_parser.dia_to_metadata_parser import DiaToMetadata
+
+transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
+                                        transforms.ToTensor(),
+                                        transforms.Normalize(mean=[0.], std=[255.])])
 
 
 def init_argparse():
@@ -40,12 +45,14 @@ def train(args, gene):
     if args.tiles_dir:
         tiles_directory_path = args.tiles_dir
 
+    dia_metadata = DiaToMetadata(Configuration.DIA_GENES_FILE_PATH, Configuration.RNR_METADATA_FILE_PATH,
+                                 tiles_directory_path)
+
+    data_splitter = DataSplitter(dia_metadata)
     wandb_logger = WandbLogger(project="proteomics-project", log_model=True)
     num_of_workers = int(multiprocessing.cpu_count())
 
-    dia_metadata = DiaToMetadata(Configuration.DIA_GENES_FILE_PATH, Configuration.RNR_METADATA_FILE_PATH,
-                                 tiles_directory_path)
-    gene_slides_with_labels = dia_metadata.get_gene_slides_with_labels(gene)
+    extreme, ood = dia_metadata.split_by_expression_level(gene)
 
 
 def main():
@@ -57,6 +64,7 @@ def main():
         for gene in Configuration.GENES:
             prepare_train_env(gene)
             train(args, gene)
+            inference(args.gene)
 
     elif args.inference:
         inference(args.gene)

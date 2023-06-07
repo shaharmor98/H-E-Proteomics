@@ -237,3 +237,51 @@ class DiaToMetadata(object):
             low_train_ids[instance] = 0
 
         return high_train_ids, low_train_ids, high_test_ids, low_test_ids
+
+    def get_gene_normalized_quant(self, gene_name):
+        tnbc = self.get_tnbc_unique_df()
+        ids = self.get_existing_slides_ids()
+        tnbc = tnbc[tnbc['SCANB_PD_ID'].isin(ids.keys())]
+        rnrs = self.map_scanb_pd_id_to_rnr(tnbc['SCANB_PD_ID'].to_list())
+        genes = self.get_genes_with_complete_records(rnrs)
+        gene_row = genes.loc[genes['Gene_symbol'] == gene_name]
+        if len(gene_row) != 1:
+            raise RuntimeError("WTF just happened with {}".format(gene_name))
+
+        normalized_row = self.get_gene_normalized_protein_quant(gene_row)
+        return normalized_row
+
+    def get_rnrs(self):
+        tnbc = self.get_tnbc_unique_df()
+        ids = self.get_existing_slides_ids()
+        tnbc = tnbc[tnbc['SCANB_PD_ID'].isin(ids.keys())]
+        rnrs = self.map_scanb_pd_id_to_rnr(tnbc['SCANB_PD_ID'].to_list())
+        return rnrs
+
+    def split_by_expression_level(self, gene_name):
+        row = self.get_gene_normalized_quant(gene_name)
+        rnrs = self.get_rnrs()
+        high_percentile = np.percentile(row, 70)
+        low_percentile = np.percentile(row, 30)
+
+        high_cols = row[row >= high_percentile].dropna(axis=1).columns
+        low_cols = row[row <= low_percentile].dropna(axis=1).columns
+        ood_cols = row[(row > low_percentile) & (row < high_percentile)].dropna(axis=1).columns
+
+        high_rnrs = [(record[record.find("_") + 1:], 1) for record in high_cols.to_list() if
+                     record.startswith('ProteinQuant_')]
+        ood_rnrs = [record[record.find("_") + 1:] for record in ood_cols.to_list() if
+                    record.startswith('ProteinQuant_')]
+        low_rnrs = [(record[record.find("_") + 1:], 0) for record in low_cols.to_list() if
+                    record.startswith('ProteinQuant_')]
+
+        ood_ids = []
+        for rnr in ood_rnrs:
+            ood_ids.append(list(filter(lambda x: rnrs[x] == rnr, rnrs))[0])
+
+        extreme_ids = {}
+        for rnr, label in high_rnrs + low_rnrs:
+            slide_id = list(filter(lambda x: rnrs[x] == rnr, rnrs))[0]
+            extreme_ids[slide_id] = label
+
+        return extreme_ids, ood_ids
