@@ -3,18 +3,29 @@ import json
 import multiprocessing
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats import spearmanr, pearsonr
+
+from sklearn import metrics as metrc
+import pandas as pd
+import pytorch_lightning as pl
 from lightning_lite import seed_everything
+from matplotlib import pyplot
 from pytorch_lightning.callbacks import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
+from sklearn.metrics import auc
+from sklearn.metrics import f1_score
+from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_curve
 from torch.utils.data import DataLoader
 from torchvision import transforms
-from data_splitter import DataSplitter
+
 from configuration import Configuration
 from data_parser.dia_to_metadata_parser import DiaToMetadata
+from data_splitter import DataSplitter
 from models.proteinQuant.protein_quant_classifier import ProteinQuantClassifier
-import pytorch_lightning as pl
-
 from models.proteinQuant.tiles_dataset import TilesDataset
 
 transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
@@ -83,18 +94,19 @@ def train(args, gene):
                                        persistent_workers=True, pin_memory=True)
         trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=validation_loader)
 
-    run_on_ood(ood, tiles_directory_path, gene)
+    # run_on_ood(ood, tiles_directory_path, gene)
 
 
 def run_on_ood(ood, tiles_directory, gene):
-    checkpoint_path = []
-    for n_round in range(Configuration.N_ROUNDS):
-        model_path = "model." + gene + "-round-" + str(n_round) + ".pt"
-        if os.path.exists(model_path):
-            checkpoint_path.append(model_path)
-
+    # checkpoint_path = []
+    # for n_round in range(Configuration.N_ROUNDS):
+    #     model_path = "model." + gene + "-round-" + str(n_round) + ".pt"
+    #     if os.path.exists(model_path):
+    #         checkpoint_path.append(model_path)
+    paths = []  # should be paths to ckpt files
     results = {}
-    for ckpt_path in checkpoint_path:
+    for ckpt_path in paths:
+        # for ckpt_path in checkpoint_path:
         model = ProteinQuantClassifier.load_from_checkpoint(ckpt_path)
         model_name = os.path.basename(ckpt_path)
         print("Starting {}".format(model_name))
@@ -118,26 +130,109 @@ def analyse_results(gene):
                                                            patch_size=Configuration.PATCH_SIZE)
     dia_metadata = DiaToMetadata(Configuration.DIA_GENES_FILE_PATH, Configuration.RNR_METADATA_FILE_PATH,
                                  tiles_directory)
-    normalized_records = dia_metadata.get_normalized_gene_records(gene_name=gene)
+    normalized_records = dia_metadata.get_continuous_normalized_records(gene_name=gene)
     with open(Configuration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), 'r') as f:
         predictions = json.load(f)
 
-    with open(Configuration.OOD_FILE_PATH.format(gene), 'r') as f:
+    with open(Configuration.OOD_FILE_PATH.format(gene=gene), 'r') as f:
         ood = json.load(f)
 
     actual_prediction = []
     for slide_id in ood:
         actual_prediction.append(normalized_records[slide_id])
 
-    pred_expression_level = []
+    pred_binary_level = []
     for test_id in ood:
         pred = predictions[test_id]
-        dataset = TilesDataset(tiles_directory, transform_compose, [[test_id, -1]], caller="Prediction dataset")
-        total = np.sum(np.where(np.asarray(pred) > 0.5, 1, 0))
-        ratio = total / dataset.get_num_of_files()
-        pred_expression_level.append(ratio)
+        pred = np.asarray(pred)
+        # dataset = TilesDataset(tiles_directory, transform_compose, [[test_id, -1]], caller="Prediction dataset")
+        pred = np.where(pred > 0.5, 1, 0)
+        models_predictions = np.mean(pred, axis=1)
+        models_predictions = np.where(models_predictions > 0.5, 1, 0)
+        final_prediction = int(np.mean(models_predictions) > 0.5)
+        pred_binary_level.append(final_prediction)
 
-    return actual_prediction, pred_expression_level
+    pred_scores = []
+    for test_id in ood:
+        pred = predictions[test_id]
+        pred = np.asarray(pred)
+        # dataset = TilesDataset(tiles_directory, transform_compose, [[test_id, -1]], caller="Prediction dataset")
+        pred = np.where(pred > 0.5, 1, 0)
+        models_predictions = np.mean(pred, axis=1)
+        pred_scores.append(np.mean(models_predictions))
+
+    median = np.percentile(np.asarray(list(normalized_records.values())), 50)
+    true_labels = []
+    for test_id in ood:
+        true_labels.append(int(normalized_records[test_id] > median))
+
+    # create pandas dataframe from the results
+    df = pd.DataFrame({'true_label': true_labels, 'pred': pred_binary_level, 'score': pred_scores})
+
+    # calculate spearman and pearson correlation
+    spearman_corr = spearmanr(df['true_label'], df['score'])
+    pearson_corr = pearsonr(df['true_label'], df['score'])
+    spearman_corr = spearmanr(actual_prediction, df['score'])
+    pearson_corr = pearsonr(actual_prediction, df['score'])
+
+
+
+def create_PR_curve(df_multi_model_res, output_path):
+    fig, axes = plt.subplots(1, 1, figsize=(8, 8))
+    lr_precision, lr_recall, _ = precision_recall_curve(df_multi_model_res['true_label'], df_multi_model_res['score'])
+    lr_f1, lr_auc = f1_score(df_multi_model_res['true_label'], df_multi_model_res['pred']), auc(lr_recall, lr_precision)
+    # plot the precision-recall curves
+    no_skill = len(df_multi_model_res['true_label'][df_multi_model_res['true_label'] == 1]) / len(
+        df_multi_model_res['true_label'])
+    plt.plot([0, 1], [no_skill, no_skill], linestyle='--', label='Defualt', c='#0f0f0f')
+    plt.plot(lr_recall, lr_precision, label='Classifier')
+    # axis labels
+    plt.xlabel('Recall', size=14)
+    plt.ylabel('Precision', size=14)
+    axes.set_title('PR Curve, F1_score=%.3f' % (lr_f1), size=16)
+    # show the legend
+    plt.legend()
+    # show the plot
+    # plt.show()
+    plt.savefig(output_path)
+    plt.close(fig)
+
+
+def create_ROC_curve(df_multi_model_res, output_path):
+    fig, axes = plt.subplots(1, 1, figsize=(8, 8))
+    testy = df_multi_model_res['true_label']
+    ns_probs = np.zeros(len(df_multi_model_res))
+    # predict probabilities
+    lr_probs = df_multi_model_res['score']
+    # calculate scores
+    ns_auc = roc_auc_score(testy, ns_probs)
+    lr_auc = roc_auc_score(testy, lr_probs)
+    # summarize scores
+    print('Defualt: ROC AUC=%.3f' % (ns_auc))
+    print('Classifier: ROC AUC=%.3f' % (lr_auc))
+    # calculate roc curves
+    ns_fpr, ns_tpr, _ = roc_curve(testy, ns_probs)
+    lr_fpr, lr_tpr, _ = roc_curve(testy, lr_probs)
+    # plot the roc curve for the model
+    pyplot.plot(ns_fpr, ns_tpr, linestyle='--', label='Defualt', c='#0f0f0f')
+    pyplot.plot(lr_fpr, lr_tpr, label='Classifier')
+    # axis labels
+    pyplot.xlabel('False Positive Rate', size=14)
+    pyplot.ylabel('True Positive Rate', size=14)
+    axes.set_title('ROC Curve, AUC=%.3f' % (lr_auc), size=16)
+    # show the legend
+    pyplot.legend()
+    # show the plot
+    # pyplot.show()
+    plt.savefig(output_path)
+    plt.close(fig)
+
+
+def create_df_confusion_matrix(y_true, y_pred, normalize=None):
+    res_conf_matrix = metrc.confusion_matrix(y_true, y_pred, normalize=normalize, labels=[True, False]).T
+    rows = np.expand_dims(np.array(['Predicted Positive', 'Predicted Negative']), axis=1)
+    res_conf_matrix_with_rows = np.concatenate((rows, res_conf_matrix), axis=1)
+    return pd.DataFrame(res_conf_matrix_with_rows, columns=['', 'Actual Positive', 'Actual Negative'])
 
 
 def main():
@@ -145,7 +240,6 @@ def main():
     args = parser.parse_args()
 
     if args.train:
-        print("Yallha")
         seed_everything(Configuration.SEED)
         for gene in Configuration.GENES:
             prepare_train_env(gene)
