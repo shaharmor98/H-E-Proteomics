@@ -1,4 +1,5 @@
 import argparse
+import itertools
 import json
 import multiprocessing
 import os
@@ -175,6 +176,62 @@ def analyse_results(gene):
     spearman_corr = spearmanr(actual_prediction, df['score'])
     pearson_corr = pearsonr(actual_prediction, df['score'])
 
+def permutations():
+    ids = list(itertools.combinations(np.arange(5), 3))
+    # Shahar then you can use ids to every time get different results.
+def smaller_ood_fraction(gene_name):
+    tiles_directory = Configuration.TILES_DIRECTORY.format(zoom_level=Configuration.ZOOM_LEVEL,
+                                                           patch_size=Configuration.PATCH_SIZE)
+    dia_metadata = DiaToMetadata(Configuration.DIA_GENES_FILE_PATH, Configuration.RNR_METADATA_FILE_PATH,
+                                 tiles_directory)
+
+    row = dia_metadata.get_gene_normalized_quant(gene_name)
+    rnrs = dia_metadata.get_rnrs()
+    ood_near_high_low_percentile = np.percentile(row, 60)
+    ood_near_high_high_percentile = np.percentile(row, 70)
+    ood_near_low_high_percentile = np.percentile(row, 40)
+    ood_near_low_low_percentile = np.percentile(row, 30)
+
+    ood_near_high_cols = row[(row > ood_near_high_low_percentile) & (row < ood_near_high_high_percentile)].dropna(
+        axis=1).columns
+    ood_near_low_cols = row[(row > ood_near_low_low_percentile) & (row < ood_near_low_high_percentile)].dropna(
+        axis=1).columns
+
+    ood_rnrs = [record[record.find("_") + 1:] for record in ood_near_high_cols.to_list() if
+                record.startswith('ProteinQuant_')]
+    ood_rnrs.extend([record[record.find("_") + 1:] for record in ood_near_low_cols.to_list() if
+                     record.startswith('ProteinQuant_')])
+
+    ood_ids = []
+    for rnr in ood_rnrs:
+        ood_ids.append(list(filter(lambda x: rnrs[x] == rnr, rnrs))[0])
+
+    normalized_records = dia_metadata.get_continuous_normalized_records(gene_name=gene_name)
+    median = np.percentile(np.asarray(list(normalized_records.values())), 50)
+    true_labels = []
+    for test_id in ood_ids:
+        true_labels.append(int(normalized_records[test_id] > median))
+
+    with open(Configuration.PREDICTIONS_SUMMARY_FILE.format(gene=gene_name), 'r') as f:
+        predictions = json.load(f)
+
+    pred_binary_level = []
+    for test_id in ood_ids:
+        pred = predictions[test_id]
+        pred = np.asarray(pred)
+        pred = np.where(pred > 0.5, 1, 0)
+        models_predictions = np.mean(pred, axis=1)
+        models_predictions = np.where(models_predictions > 0.5, 1, 0)
+        final_prediction = int(np.mean(models_predictions) > 0.5)
+        pred_binary_level.append(final_prediction)
+
+    pred_scores = []
+    for test_id in ood_ids:
+        pred = predictions[test_id]
+        pred = np.asarray(pred)
+        pred = np.where(pred > 0.5, 1, 0)
+        models_predictions = np.mean(pred, axis=1)
+        pred_scores.append(np.mean(models_predictions))
 
 
 def create_PR_curve(df_multi_model_res, output_path):
