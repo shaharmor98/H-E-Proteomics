@@ -85,8 +85,7 @@ def train(args, gene):
                                                                          val_proportion=0.35)
         model = ProteinQuantClassifier(device).to(device)
         wandb_logger = WandbLogger(project="proteomics-project", log_model=True,
-                                   name=gene + "-round-" + str(n_round),
-                                   save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene))
+                                   save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene), version=str(n_round))
         trainer = pl.Trainer(max_epochs=10, devices="auto", accelerator="auto",
                              num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp", max_steps=2,
                              )  # todo- return callback!!!
