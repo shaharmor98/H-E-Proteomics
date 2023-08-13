@@ -89,7 +89,8 @@ def train(args, gene):
                                    save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene))
         trainer = pl.Trainer(max_epochs=10, devices="auto", accelerator="auto",
                              num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp", max_steps=2,
-                             callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")])
+                             )  # todo- return callback!!!
+        # callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")])
         # default_root_dir=Configuration.CHECKPOINTS_PATH.format(
         #     gene=gene + "-round-" + str(n_round)))
         train_dataset = TilesDataset(tiles_directory_path, transform_compose, train_instances, "Train-dataset")
