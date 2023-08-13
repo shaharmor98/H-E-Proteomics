@@ -60,16 +60,17 @@ def train(args, gene):
         print("Device must be provided")
         exit(1)
 
-    tiles_directory_path = Configuration.TILES_DIRECTORY.format(zoom_level=Configuration.ZOOM_LEVEL,
-                                                                patch_size=Configuration.PATCH_SIZE)
     if args.tiles_dir:
         tiles_directory_path = args.tiles_dir
+
+    else:
+        tiles_directory_path = Configuration.TILES_DIRECTORY.format(zoom_level=Configuration.ZOOM_LEVEL,
+                                                                    patch_size=Configuration.PATCH_SIZE)
 
     dia_metadata = DiaToMetadata(Configuration.DIA_GENES_FILE_PATH, Configuration.RNR_METADATA_FILE_PATH,
                                  tiles_directory_path)
 
     data_splitter = DataSplitter(dia_metadata)
-    wandb_logger = WandbLogger(project="proteomics-project", log_model=True)
     num_workers = int(multiprocessing.cpu_count())
 
     extreme, ood = dia_metadata.split_by_expression_level(gene)
@@ -79,13 +80,18 @@ def train(args, gene):
 
     for n_round in range(Configuration.N_ROUNDS):
         print("Starting round: " + str(n_round))
-        train_instances, valid_instances = data_splitter.split_train_val(extreme, seed=Configuration.SEED + n_round)
+        train_instances, valid_instances = data_splitter.split_train_val(extreme,
+                                                                         seed=Configuration.SEED + n_round,
+                                                                         val_proportion=0.35)
         model = ProteinQuantClassifier(device).to(device)
+        wandb_logger = WandbLogger(project="proteomics-project", log_model=True,
+                                   name=gene + "-round-" + str(n_round),
+                                   save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene))
         trainer = pl.Trainer(max_epochs=10, devices="auto", accelerator="auto",
-                             num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
-                             callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")],
-                             default_root_dir=Configuration.CHECKPOINTS_PATH.format(
-                                 gene=gene + "-round-" + str(n_round)))
+                             num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp", max_steps=2,
+                             callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")])
+        # default_root_dir=Configuration.CHECKPOINTS_PATH.format(
+        #     gene=gene + "-round-" + str(n_round)))
         train_dataset = TilesDataset(tiles_directory_path, transform_compose, train_instances, "Train-dataset")
         validation_dataset = TilesDataset(tiles_directory_path, transform_compose, valid_instances, "Val-dataset")
 
@@ -176,9 +182,7 @@ def analyse_results(gene):
     spearman_corr = spearmanr(actual_prediction, df['score'])
     pearson_corr = pearsonr(actual_prediction, df['score'])
 
-def permutations():
-    ids = list(itertools.combinations(np.arange(5), 3))
-    # Shahar then you can use ids to every time get different results.
+
 def smaller_ood_fraction(gene_name):
     tiles_directory = Configuration.TILES_DIRECTORY.format(zoom_level=Configuration.ZOOM_LEVEL,
                                                            patch_size=Configuration.PATCH_SIZE)
