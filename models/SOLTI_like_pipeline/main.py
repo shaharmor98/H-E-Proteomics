@@ -85,7 +85,8 @@ def train(args, gene):
                                                                          val_proportion=0.35)
         model = ProteinQuantClassifier(device).to(device)
         wandb_logger = WandbLogger(project="proteomics-project", log_model=True,
-                                   save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene), version=str(n_round))
+                                   save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene),
+                                   checkpoint_name=gene + "-round-" + str(n_round))
         trainer = pl.Trainer(max_epochs=10, devices="auto", accelerator="auto",
                              num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp", max_steps=2,
                              )  # todo- return callback!!!
@@ -101,7 +102,7 @@ def train(args, gene):
                                        persistent_workers=True, pin_memory=True)
         trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=validation_loader)
 
-    # run_on_ood(ood, tiles_directory_path, gene)
+        # run_on_ood(ood, tiles_directory_path, gene)
 
 
 def run_on_ood(ood, tiles_directory, gene):
