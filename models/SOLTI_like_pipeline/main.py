@@ -82,7 +82,7 @@ def train(args, gene):
         print("Starting round: " + str(n_round))
         train_instances, valid_instances = data_splitter.split_train_val(extreme,
                                                                          seed=Configuration.SEED + n_round,
-                                                                         val_proportion=0.35)
+                                                                         val_proportion=0.2)
         model = ProteinQuantClassifier(device).to(device)
         wandb_logger = WandbLogger(project="proteomics-project", log_model=True,
                                    save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene))
@@ -125,7 +125,10 @@ def run_on_ood(ood, tiles_directory, gene):
             predictions = [p.item() for p in predictions]
             results[test_id].append(predictions)
 
-    with open(Configuration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), "w") as f:
+    # with open(Configuration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), "w") as f:
+    #     json.dump(results, f)
+    with open("/home/shaharmor98/paper/checkpoints/MKI67/proteomics-project/13_8_run_35_val/predictions.txt",
+              "w") as f:
         json.dump(results, f)
 
 
