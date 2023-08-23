@@ -93,8 +93,8 @@ def train(args, gene):
                                                                date=datetime.now().strftime("%d-%m-%Y-%H-%M-%S")),
                                    checkpoint_name="Model." + gene + "-round-" + str(n_round))
         trainer = pl.Trainer(max_epochs=10, max_steps=2, devices="auto", accelerator="auto",
-                             num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
-                             callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")])
+                             num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",)
+                             # callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")])
         train_dataset = TilesDataset(tiles_directory_path, transform_compose, train_instances, "Train-dataset")
         validation_dataset = TilesDataset(tiles_directory_path, transform_compose, valid_instances, "Val-dataset")
 
