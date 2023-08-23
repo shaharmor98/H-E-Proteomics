@@ -84,7 +84,7 @@ def train(args, gene):
     versions = []
     for path in glob.glob(Configuration.CHECKPOINTS_PATH.format(gene=gene) + "/" + project_name + "/*--v_*"):
         name = path.split("/")[-1]
-        version = int(name.split("-")[-1])
+        version = int(name.split("_")[-1])
         versions.append(version)
 
     if len(versions) == 0:
