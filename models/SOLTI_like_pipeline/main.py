@@ -94,7 +94,7 @@ def train(args, gene):
 
     wandb_logger = WandbLogger(project=project_name, log_model=True,
                                save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene),
-                               version="{gene}-{version}".format(gene=gene, version=str(version)))
+                               version="{gene}--v_{version}".format(gene=gene, version=str(version)))
     for n_round in range(Configuration.N_ROUNDS):
         print("Starting round: " + str(n_round))
         train_instances, valid_instances = data_splitter.split_train_val(extreme,
@@ -103,10 +103,10 @@ def train(args, gene):
         with open(Configuration.VAL_FILE_PATH.format(gene=gene, n_round=n_round), "w") as f:
             json.dump(valid_instances, f)
         model = ProteinQuantClassifier(device).to(device)
-        trainer = pl.Trainer(max_epochs=10, max_steps=2, devices="auto", accelerator="auto",
-                             num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp")
+        trainer = pl.Trainer(max_epochs=10, devices="auto", accelerator="auto",
+                             num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
+                             callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")])
         trainer.checkpoint_callback.filename = "gene-" + gene + "-round-" + str(n_round)
-        # callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")])
         train_dataset = TilesDataset(tiles_directory_path, transform_compose, train_instances, "Train-dataset")
         validation_dataset = TilesDataset(tiles_directory_path, transform_compose, valid_instances, "Val-dataset")
 
@@ -116,7 +116,7 @@ def train(args, gene):
                                        persistent_workers=True, pin_memory=True)
         trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=validation_loader)
 
-        # run_on_ood(ood, tiles_directory_path, gene)
+    # run_on_ood(ood, tiles_directory_path, gene)
 
 
 def run_on_ood(ood, tiles_directory, gene):
