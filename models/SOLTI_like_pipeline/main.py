@@ -92,9 +92,10 @@ def train(args, gene):
     else:
         version = max(versions) + 1
 
+    run_version = "{gene}--v_{version}".format(gene=gene, version=str(version))
     wandb_logger = WandbLogger(project=project_name, log_model=True,
                                save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene),
-                               version="{gene}--v_{version}".format(gene=gene, version=str(version)))
+                               version=run_version)
     for n_round in range(Configuration.N_ROUNDS):
         print("Starting round: " + str(n_round))
         train_instances, valid_instances = data_splitter.split_train_val(extreme,
@@ -116,23 +117,29 @@ def train(args, gene):
                                        persistent_workers=True, pin_memory=True)
         trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=validation_loader)
 
-    # run_on_ood(ood, tiles_directory_path, gene)
+    run_on_ood(ood, tiles_directory_path, gene, run_version, project_name, "ood-predictions.txt")
+    for n_round in range(Configuration.N_ROUNDS):
+        with open(Configuration.VAL_FILE_PATH.format(gene=gene, n_round=n_round), "r") as f:
+            valid_instances = json.load(f)
+        run_on_ood(valid_instances, tiles_directory_path, gene, run_version, project_name,
+                   "val-predictions-round-" + str(n_round) + ".txt")
 
 
-def run_on_ood(ood, tiles_directory, gene):
-    # checkpoint_path = []
-    # for n_round in range(Configuration.N_ROUNDS):
-    #     model_path = "model." + gene + "-round-" + str(n_round) + ".pt"
-    #     if os.path.exists(model_path):
-    #         checkpoint_path.append(model_path)
-    paths = []  # should be paths to ckpt files
+def run_on_ood(ids, tiles_directory, gene, run_version, project_name, target_file_name):
+    checkpoint_path = []
+    checkpoints_dir = os.path.join(Configuration.CHECKPOINTS_PATH.format(gene=gene), project_name, run_version,
+                                   "checkpoints")
+    for n_round in range(Configuration.N_ROUNDS):
+        model_path = os.path.join(checkpoints_dir, "gene-" + gene + "-round-" + str(n_round) + ".ckpt")
+        if os.path.exists(model_path):
+            checkpoint_path.append(model_path)
     results = {}
-    for ckpt_path in paths:
+    for ckpt_path in checkpoint_path:
         # for ckpt_path in checkpoint_path:
         model = ProteinQuantClassifier.load_from_checkpoint(ckpt_path)
         model_name = os.path.basename(ckpt_path)
         print("Starting {}".format(model_name))
-        for test_id in ood:
+        for test_id in ids:
             if not test_id in results:
                 results[test_id] = []
             print("Starting test_id: ", test_id)
@@ -143,10 +150,7 @@ def run_on_ood(ood, tiles_directory, gene):
             predictions = [p.item() for p in predictions]
             results[test_id].append(predictions)
 
-    # with open(Configuration.PREDICTIONS_SUMMARY_FILE.format(gene=gene), "w") as f:
-    #     json.dump(results, f)
-    with open("/home/shaharmor98/paper/checkpoints/MKI67/proteomics-project/13_8_run_35_val/predictions.txt",
-              "w") as f:
+    with open(os.path.join(checkpoints_dir, target_file_name), "w") as f:
         json.dump(results, f)
 
 
