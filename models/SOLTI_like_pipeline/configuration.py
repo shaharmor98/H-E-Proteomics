@@ -17,6 +17,6 @@ class Configuration(object):
                                                "partial.xlsx")
     PREDICTIONS_SUMMARY_FILE = os.path.join(CHECKPOINTS_PATH, "predictions.txt")
     OOD_FILE_PATH = os.path.join(CHECKPOINTS_PATH, "ood.txt")
-    VAL_FILE_PATH = os.path.join(CHECKPOINTS_PATH, "val_{}.txt")
+    VAL_FILE_PATH = os.path.join(CHECKPOINTS_PATH, "val_{n_round}.txt")
     N_ROUNDS = 5
     BATCH_SIZE = 32
