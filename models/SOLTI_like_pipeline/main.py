@@ -89,12 +89,14 @@ def train(args, gene):
         model = ProteinQuantClassifier(device).to(device)
         wandb_logger = WandbLogger(project="proteomics-project", log_model=True,
                                    save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene),
-                                   name="{gene}-{date}".format(gene=gene,
-                                                               date=datetime.now().strftime("%d-%m-%Y-%H-%M-%S")),
-                                   checkpoint_name="Model." + gene + "-round-" + str(n_round))
+                                   name="SHAHAR_TTT {gene}-{date}".format(gene=gene,
+                                                                          date=datetime.now().strftime(
+                                                                              "%d-%m-%Y-%H-%M-%S")),
+                                   checkpoint_name="SHAHAR_TTT Model." + gene + "-round-" + str(n_round))
         trainer = pl.Trainer(max_epochs=10, max_steps=2, devices="auto", accelerator="auto",
-                             num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",)
-                             # callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")])
+                             num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp")
+        trainer.checkpoint_callback.filename = "SHAHAR_TTT Model." + gene + "-round-" + str(n_round)
+        # callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")])
         train_dataset = TilesDataset(tiles_directory_path, transform_compose, train_instances, "Train-dataset")
         validation_dataset = TilesDataset(tiles_directory_path, transform_compose, valid_instances, "Val-dataset")
 
