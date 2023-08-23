@@ -3,6 +3,7 @@ import itertools
 import json
 import multiprocessing
 import os
+from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -82,11 +83,16 @@ def train(args, gene):
         print("Starting round: " + str(n_round))
         train_instances, valid_instances = data_splitter.split_train_val(extreme,
                                                                          seed=Configuration.SEED + n_round,
-                                                                         val_proportion=0.2)
+                                                                         val_proportion=0.35)
+        with open(Configuration.VAL_FILE_PATH.format(gene=gene, n_round=n_round), "w") as f:
+            json.dump(valid_instances, f)
         model = ProteinQuantClassifier(device).to(device)
         wandb_logger = WandbLogger(project="proteomics-project", log_model=True,
-                                   save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene))
-        trainer = pl.Trainer(max_epochs=10, devices="auto", accelerator="auto",
+                                   save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene),
+                                   name="{gene}-{date}".format(gene=gene,
+                                                               date=datetime.now().strftime("%d-%m-%Y-%H-%M-%S")),
+                                   checkpoint_name="Model." + gene + "-round-" + str(n_round))
+        trainer = pl.Trainer(max_epochs=10, max_steps=2, devices="auto", accelerator="auto",
                              num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
                              callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")])
         train_dataset = TilesDataset(tiles_directory_path, transform_compose, train_instances, "Train-dataset")
@@ -152,12 +158,32 @@ def analyse_results(gene):
     for test_id in ood:
         pred = predictions[test_id]
         pred = np.asarray(pred)
-        # dataset = TilesDataset(tiles_directory, transform_compose, [[test_id, -1]], caller="Prediction dataset")
         pred = np.where(pred > 0.5, 1, 0)
         models_predictions = np.mean(pred, axis=1)
         models_predictions = np.where(models_predictions > 0.5, 1, 0)
         final_prediction = int(np.mean(models_predictions) > 0.5)
         pred_binary_level.append(final_prediction)
+
+    def get_score_prediction_per_model(ood, predictions):
+        res = []
+        for i in range(Configuration.N_ROUNDS):
+            models_res = []
+            for test_id in ood:
+                pred = predictions[test_id]
+                pred = np.asarray(pred)[i, :]
+                pred = np.where(pred > 0.5, 1, 0)
+                prediction = np.mean(pred)
+                # models_predictions = np.where(models_predictions > 0.5, 1, 0)
+                # final_prediction = int(models_predictions > 0.5)
+                models_res.append(prediction)
+            res.append(models_res)
+        return res
+
+    def per_model_auc(actual, scores):
+        aucs = []
+        for i in range(Configuration.N_ROUNDS):
+            aucs.append(roc_auc_score(actual, scores[i]))
+        return sorted(aucs)
 
     pred_scores = []
     for test_id in ood:
