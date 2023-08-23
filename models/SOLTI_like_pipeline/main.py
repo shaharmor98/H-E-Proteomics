@@ -1,4 +1,5 @@
 import argparse
+import glob
 import itertools
 import json
 import multiprocessing
@@ -78,7 +79,22 @@ def train(args, gene):
 
     with open(Configuration.OOD_FILE_PATH.format(gene=gene), "w") as f:
         json.dump(ood, f)
+    project_name = "proteomics-project"
 
+    versions = []
+    for path in glob.glob(Configuration.CHECKPOINTS_PATH.format(gene=gene) + "/" + project_name + "/*--v_*"):
+        name = path.split("/")[-1]
+        version = int(name.split("-")[-1])
+        versions.append(version)
+
+    if len(versions) == 0:
+        version = 0
+    else:
+        version = max(versions) + 1
+
+    wandb_logger = WandbLogger(project=project_name, log_model=True,
+                               save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene),
+                               version="{gene}-{version}".format(gene=gene, version=str(version)))
     for n_round in range(Configuration.N_ROUNDS):
         print("Starting round: " + str(n_round))
         train_instances, valid_instances = data_splitter.split_train_val(extreme,
@@ -87,13 +103,9 @@ def train(args, gene):
         with open(Configuration.VAL_FILE_PATH.format(gene=gene, n_round=n_round), "w") as f:
             json.dump(valid_instances, f)
         model = ProteinQuantClassifier(device).to(device)
-        wandb_logger = WandbLogger(project="proteomics-project", log_model=True,
-                                   save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene), version="Hello",
-                                   name="Hello-Run",
-                                   checkpoint_name="SHAHAR_TTT-Model-" + gene + "-round-" + str(n_round))
         trainer = pl.Trainer(max_epochs=10, max_steps=2, devices="auto", accelerator="auto",
                              num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp")
-        trainer.checkpoint_callback.filename = "SHAHAR_TTPerhapsHereT-Model-" + gene + "-round-" + str(n_round)
+        trainer.checkpoint_callback.filename = "gene-" + gene + "-round-" + str(n_round)
         # callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")])
         train_dataset = TilesDataset(tiles_directory_path, transform_compose, train_instances, "Train-dataset")
         validation_dataset = TilesDataset(tiles_directory_path, transform_compose, valid_instances, "Val-dataset")
