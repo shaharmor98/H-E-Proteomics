@@ -121,6 +121,7 @@ def train(args, gene):
     for n_round in range(Configuration.N_ROUNDS):
         with open(Configuration.VAL_FILE_PATH.format(gene=gene, n_round=n_round), "r") as f:
             valid_instances = json.load(f)
+            valid_instances = [v[0] for v in valid_instances]
         run_on_ood(valid_instances, tiles_directory_path, gene, run_version, project_name,
                    "val-predictions-round-" + str(n_round) + ".txt")
 
@@ -130,7 +131,7 @@ def run_on_ood(ids, tiles_directory, gene, run_version, project_name, target_fil
     checkpoints_dir = os.path.join(Configuration.CHECKPOINTS_PATH.format(gene=gene), project_name, run_version,
                                    "checkpoints")
     for n_round in range(Configuration.N_ROUNDS):
-        model_path = os.path.join(checkpoints_dir, "gene-" + gene + "-round-" + str(n_round) + ".ckpt")
+        model_path = os.path.join(checkpoints_dir, "gene-" + gene + "-round-" + str(n_round) + "-v1.ckpt")
         if os.path.exists(model_path):
             checkpoint_path.append(model_path)
     results = {}
@@ -336,6 +337,201 @@ def create_df_confusion_matrix(y_true, y_pred, normalize=None):
     rows = np.expand_dims(np.array(['Predicted Positive', 'Predicted Negative']), axis=1)
     res_conf_matrix_with_rows = np.concatenate((rows, res_conf_matrix), axis=1)
     return pd.DataFrame(res_conf_matrix_with_rows, columns=['', 'Actual Positive', 'Actual Negative'])
+
+
+def get_score_prediction_per_model(ood, predictions):
+    res = []
+    for i in range(Configuration.N_ROUNDS):
+        models_res = []
+        for test_id in ood:
+            pred = predictions[test_id]
+            pred = np.asarray(pred)[i, :]
+            pred = np.where(pred > 0.5, 1, 0)
+            prediction = np.mean(pred)
+            # models_predictions = np.where(models_predictions > 0.5, 1, 0)
+            # final_prediction = int(models_predictions > 0.5)
+            models_res.append(prediction)
+        res.append(models_res)
+    return res
+
+
+def per_model_auc(actual, scores):
+    aucs = []
+    for i in range(Configuration.N_ROUNDS):
+        aucs.append(roc_auc_score(actual, scores[i]))
+    # return sorted(aucs)
+    return aucs
+
+
+def final_results_method():
+    dia_metadata = DiaToMetadata(Configuration.DIA_GENES_FILE_PATH, Configuration.RNR_METADATA_FILE_PATH, "")
+    with open("/Users/shahar.mor/HE_Results/aug_27/MKI67/normalized_mki67.txt", 'r') as f:
+        normalized_records = json.load(f)
+    with open("/Users/shahar.mor/HE_Results/aug_27/MKI67/ood.txt", 'r') as f:
+        ood = json.load(f)
+    with open("/Users/shahar.mor/HE_Results/aug_27/MKI67/ood-predictions.txt", 'r') as f:
+        predictions = json.load(f)
+
+    median = np.percentile(np.asarray(list(normalized_records.values())), 50)
+    true_labels = []
+    for test_id in ood:
+        true_labels.append(int(normalized_records[test_id] > median))
+
+    # per model results
+    res = get_score_prediction_per_model(ood, predictions)
+    aucs = per_model_auc(true_labels, res)
+
+    # mean results
+    pred_binary_level = []
+    for test_id in ood:
+        pred = predictions[test_id]
+        pred = np.asarray(pred)
+        pred = np.where(pred > 0.5, 1, 0)
+        models_predictions = np.mean(pred, axis=1)
+        models_predictions = np.where(models_predictions > 0.5, 1, 0)
+        final_prediction = np.mean(models_predictions)
+        # final_prediction = int(np.mean(models_predictions) > 0.5)
+        pred_binary_level.append(final_prediction)
+    auc = roc_auc_score(true_labels, pred_binary_level)
+
+    # find val aucs, pick top 3, then find ood aucs
+    val_ids = []
+    for n_round in range(Configuration.N_ROUNDS):
+        with open("/Users/shahar.mor/HE_Results/aug_27/MKI67/val_{}.txt".format(str(n_round)), 'r') as f:
+            val_ids.append(json.load(f))
+            # val_ids[-1] = [x[0] for x in val_ids[-1]]
+
+    val_predictions = []
+    for n_round in range(Configuration.N_ROUNDS):
+        with open("/Users/shahar.mor/HE_Results/aug_27/MKI67/val-predictions-round-{}.txt".format(str(n_round)),
+                  'r') as f:
+            val_predictions.append(json.load(f))
+
+    # find val aucs
+    val_aucs = []
+    for n_round in range(Configuration.N_ROUNDS):
+        res = []
+        true_labels = []
+        for test_id, label in val_ids[n_round]:
+            pred = val_predictions[n_round][test_id]
+            pred = np.asarray(pred)
+            pred = np.where(pred > 0.5, 1, 0)
+            prediction = np.mean(pred)
+            res.append(prediction)
+            true_labels.append(label)
+
+        val_aucs.append(roc_auc_score(true_labels, res))
+
+    # after manual inspection, choose: 0, 1, 4
+    true_labels = []
+    for test_id in ood:
+        true_labels.append(int(normalized_records[test_id] > median))
+
+    indices = [0, 1, 4]
+    # indices = [0, 2, 3]
+    pred_binary_level = []
+    for test_id in ood:
+        pred = predictions[test_id]
+        pred = np.asarray(pred)[indices, :]
+        pred = np.where(pred > 0.5, 1, 0)
+        models_predictions = np.mean(pred, axis=1)
+        # models_predictions = np.where(models_predictions > 0.5, 1, 0)
+        final_prediction = np.mean(models_predictions)
+        pred_binary_level.append(final_prediction)
+    auc = roc_auc_score(true_labels, pred_binary_level)
+
+    # ood near
+    ood_near = []
+    values = list(normalized_records.values())
+    lower_percentile = np.percentile(values, 60)
+    upper_percentile = np.percentile(values, 70)
+    for name, val in normalized_records.items():
+        if lower_percentile <= val <= upper_percentile:
+            ood_near.append(name)
+            # ood_near.append((name, 1))
+
+    lower_percentile = np.percentile(values, 30)
+    upper_percentile = np.percentile(values, 40)
+    for name, val in normalized_records.items():
+        if lower_percentile <= val <= upper_percentile:
+            ood_near.append(name)
+            # ood_near.append((name, 0))
+
+    true_labels = []
+    for test_id in ood_near:
+        true_labels.append(int(normalized_records[test_id] > median))
+
+    res = get_score_prediction_per_model(ood_near, predictions)
+    aucs = per_model_auc(true_labels, res)
+
+    # mean ood near results
+    pred_binary_level = []
+    for test_id in ood_near:
+        pred = predictions[test_id]
+        pred = np.asarray(pred)
+        pred = np.where(pred > 0.5, 1, 0)
+        models_predictions = np.mean(pred, axis=1)
+        models_predictions = np.where(models_predictions > 0.5, 1, 0)
+        final_prediction = np.mean(models_predictions)
+        # final_prediction = int(np.mean(models_predictions) > 0.5)
+        pred_binary_level.append(final_prediction)
+    auc = roc_auc_score(true_labels, pred_binary_level)
+
+    indices = [0, 1, 4]
+    # indices = [0, 2, 3]
+    pred_binary_level = []
+    for test_id in ood_near:
+        pred = predictions[test_id]
+        pred = np.asarray(pred)[indices, :]
+        pred = np.where(pred > 0.5, 1, 0)
+        models_predictions = np.mean(pred, axis=1)
+        # models_predictions = np.where(models_predictions > 0.5, 1, 0)
+        final_prediction = np.mean(models_predictions)
+        pred_binary_level.append(final_prediction)
+    auc = roc_auc_score(true_labels, pred_binary_level)
+
+    # ood 40-60
+    ood_middle = []
+    values = list(normalized_records.values())
+    lower_percentile = np.percentile(values, 40)
+    upper_percentile = np.percentile(values, 60)
+    for name, val in normalized_records.items():
+        if lower_percentile <= val <= upper_percentile:
+            ood_middle.append(name)
+
+    true_labels = []
+    for test_id in ood_middle:
+        true_labels.append(int(normalized_records[test_id] > median))
+
+    res = get_score_prediction_per_model(ood_middle, predictions)
+    aucs = per_model_auc(true_labels, res)
+
+    # mean ood near results
+    pred_binary_level = []
+    for test_id in ood_middle:
+        pred = predictions[test_id]
+        pred = np.asarray(pred)
+        pred = np.where(pred > 0.5, 1, 0)
+        models_predictions = np.mean(pred, axis=1)
+        models_predictions = np.where(models_predictions > 0.5, 1, 0)
+        final_prediction = np.mean(models_predictions)
+        # final_prediction = int(np.mean(models_predictions) > 0.5)
+        pred_binary_level.append(final_prediction)
+    auc = roc_auc_score(true_labels, pred_binary_level)
+
+    indices = [0, 1, 4]
+    # indices = [0, 2, 3]
+    pred_binary_level = []
+    for test_id in ood_middle:
+        pred = predictions[test_id]
+        pred = np.asarray(pred)[indices, :]
+        pred = np.where(pred > 0.5, 1, 0)
+        models_predictions = np.mean(pred, axis=1)
+        # models_predictions = np.where(models_predictions > 0.5, 1, 0)
+        final_prediction = np.mean(models_predictions)
+        pred_binary_level.append(final_prediction)
+    auc = roc_auc_score(true_labels, pred_binary_level)
+
 
 
 def main():
