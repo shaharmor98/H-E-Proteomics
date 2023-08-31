@@ -53,7 +53,7 @@ class ProteinQuantClassifier(pl.LightningModule):
         val_loss = self.loss(y_hat.float(), original_labels)
         accuracy = self.accuracy(y_hat, original_labels)
 
-        self.log('val_loss', val_loss, prog_bar=True, sync_dist=True)
+        self.log('val_loss', val_loss, prog_bar=True, sync_dist=True, on_step=True, on_epoch=True)
         self.log('val_acc', accuracy, prog_bar=True, sync_dist=True)
         return {"val_loss": val_loss, "acc": accuracy}
 
@@ -77,4 +77,6 @@ class ProteinQuantClassifier(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
-        return optimizer
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10, verbose=True)
+
+        return {"optimizer": optimizer, "lr_scheduler": scheduler, "monitor": "val_loss"}

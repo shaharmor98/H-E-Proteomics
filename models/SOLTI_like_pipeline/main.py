@@ -5,7 +5,7 @@ import json
 import multiprocessing
 import os
 from datetime import datetime
-
+from scipy.stats import mode
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import spearmanr, pearsonr
@@ -15,7 +15,7 @@ import pandas as pd
 import pytorch_lightning as pl
 from lightning_lite import seed_everything
 from matplotlib import pyplot
-from pytorch_lightning.callbacks import EarlyStopping
+from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 from sklearn.metrics import auc
 from sklearn.metrics import f1_score
@@ -31,9 +31,15 @@ from data_splitter import DataSplitter
 from models.proteinQuant.protein_quant_classifier import ProteinQuantClassifier
 from models.proteinQuant.tiles_dataset import TilesDataset
 
-transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
+transform_compose = transforms.Compose([transforms.RandomVerticalFlip(),
+                                        transforms.RandomHorizontalFlip(),
                                         transforms.ToTensor(),
                                         transforms.Normalize(mean=[0.], std=[255.])])
+
+
+# transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
+#                                         transforms.ToTensor(),
+#                                         transforms.Normalize(mean=[0.], std=[255.])])
 
 
 def init_argparse():
@@ -96,6 +102,8 @@ def train(args, gene):
     wandb_logger = WandbLogger(project=project_name, log_model=True,
                                save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene),
                                version=run_version)
+    callbacks = [EarlyStopping(monitor="val_loss", patience=30, mode="min"),
+                 ModelCheckpoint(monitor="val_loss", mode="min", save_top_k=1)]
     for n_round in range(Configuration.N_ROUNDS):
         print("Starting round: " + str(n_round))
         train_instances, valid_instances = data_splitter.split_train_val(extreme,
@@ -104,9 +112,10 @@ def train(args, gene):
         with open(Configuration.VAL_FILE_PATH.format(gene=gene, n_round=n_round), "w") as f:
             json.dump(valid_instances, f)
         model = ProteinQuantClassifier(device).to(device)
-        trainer = pl.Trainer(max_epochs=10, devices="auto", accelerator="auto",
+        trainer = pl.Trainer(max_epochs=10, devices="auto", accelerator="auto", val_check_interval=(1 / 16),
                              num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
-                             callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")])
+                             callbacks=callbacks)
+        # callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")])
         trainer.checkpoint_callback.filename = "gene-" + gene + "-round-" + str(n_round)
         train_dataset = TilesDataset(tiles_directory_path, transform_compose, train_instances, "Train-dataset")
         validation_dataset = TilesDataset(tiles_directory_path, transform_compose, valid_instances, "Val-dataset")
@@ -380,8 +389,9 @@ def final_results_method():
     # per model results
     res = get_score_prediction_per_model(ood, predictions)
     aucs = per_model_auc(true_labels, res)
-
+    average_auc = np.asarray(aucs).mean()
     # mean results
+    """
     pred_binary_level = []
     for test_id in ood:
         pred = predictions[test_id]
@@ -393,6 +403,7 @@ def final_results_method():
         # final_prediction = int(np.mean(models_predictions) > 0.5)
         pred_binary_level.append(final_prediction)
     auc = roc_auc_score(true_labels, pred_binary_level)
+    """
 
     # find val aucs, pick top 3, then find ood aucs
     val_ids = []
@@ -427,17 +438,17 @@ def final_results_method():
     for test_id in ood:
         true_labels.append(int(normalized_records[test_id] > median))
 
-    indices = [0, 1, 4]
+    # indices = [0, 1, 4]
     # indices = [0, 2, 3]
     pred_binary_level = []
     for test_id in ood:
         pred = predictions[test_id]
-        pred = np.asarray(pred)[indices, :]
+        pred = np.asarray(pred)
+        # pred = np.asarray(pred)[indices, :]
         pred = np.where(pred > 0.5, 1, 0)
-        models_predictions = np.mean(pred, axis=1)
-        # models_predictions = np.where(models_predictions > 0.5, 1, 0)
-        final_prediction = np.mean(models_predictions)
-        pred_binary_level.append(final_prediction)
+        tiles_majority, _ = mode(pred, axis=0)
+        models_predictions = np.mean(tiles_majority)
+        pred_binary_level.append(models_predictions)
     auc = roc_auc_score(true_labels, pred_binary_level)
 
     # ood near
@@ -463,8 +474,10 @@ def final_results_method():
 
     res = get_score_prediction_per_model(ood_near, predictions)
     aucs = per_model_auc(true_labels, res)
+    average_auc = np.asarray(aucs).mean()
 
     # mean ood near results
+    """
     pred_binary_level = []
     for test_id in ood_near:
         pred = predictions[test_id]
@@ -476,18 +489,20 @@ def final_results_method():
         # final_prediction = int(np.mean(models_predictions) > 0.5)
         pred_binary_level.append(final_prediction)
     auc = roc_auc_score(true_labels, pred_binary_level)
+    """
 
-    indices = [0, 1, 4]
+    # indices = [0, 1, 4]
     # indices = [0, 2, 3]
     pred_binary_level = []
     for test_id in ood_near:
         pred = predictions[test_id]
-        pred = np.asarray(pred)[indices, :]
+        pred = np.asarray(pred)
+        # pred = np.asarray(pred)[indices, :]
         pred = np.where(pred > 0.5, 1, 0)
-        models_predictions = np.mean(pred, axis=1)
-        # models_predictions = np.where(models_predictions > 0.5, 1, 0)
-        final_prediction = np.mean(models_predictions)
-        pred_binary_level.append(final_prediction)
+        tiles_majority, _ = mode(pred, axis=0)
+        models_predictions = np.mean(tiles_majority)
+        pred_binary_level.append(models_predictions)
+
     auc = roc_auc_score(true_labels, pred_binary_level)
 
     # ood 40-60
@@ -505,19 +520,20 @@ def final_results_method():
 
     res = get_score_prediction_per_model(ood_middle, predictions)
     aucs = per_model_auc(true_labels, res)
+    average_auc = np.asarray(aucs).mean()
 
     # mean ood near results
-    pred_binary_level = []
-    for test_id in ood_middle:
-        pred = predictions[test_id]
-        pred = np.asarray(pred)
-        pred = np.where(pred > 0.5, 1, 0)
-        models_predictions = np.mean(pred, axis=1)
-        models_predictions = np.where(models_predictions > 0.5, 1, 0)
-        final_prediction = np.mean(models_predictions)
-        # final_prediction = int(np.mean(models_predictions) > 0.5)
-        pred_binary_level.append(final_prediction)
-    auc = roc_auc_score(true_labels, pred_binary_level)
+    # pred_binary_level = []
+    # for test_id in ood_middle:
+    #     pred = predictions[test_id]
+    #     pred = np.asarray(pred)
+    #     pred = np.where(pred > 0.5, 1, 0)
+    #     models_predictions = np.mean(pred, axis=1)
+    #     models_predictions = np.where(models_predictions > 0.5, 1, 0)
+    #     final_prediction = np.mean(models_predictions)
+    #     # final_prediction = int(np.mean(models_predictions) > 0.5)
+    #     pred_binary_level.append(final_prediction)
+    # auc = roc_auc_score(true_labels, pred_binary_level)
 
     indices = [0, 1, 4]
     # indices = [0, 2, 3]
@@ -531,7 +547,6 @@ def final_results_method():
         final_prediction = np.mean(models_predictions)
         pred_binary_level.append(final_prediction)
     auc = roc_auc_score(true_labels, pred_binary_level)
-
 
 
 def main():
