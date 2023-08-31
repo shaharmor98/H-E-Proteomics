@@ -31,7 +31,8 @@ from data_splitter import DataSplitter
 from models.proteinQuant.protein_quant_classifier import ProteinQuantClassifier
 from models.proteinQuant.tiles_dataset import TilesDataset
 
-transform_compose = transforms.Compose([transforms.RandomVerticalFlip(),
+transform_compose = transforms.Compose([transforms.Resize(size=(299, 299)),
+                                        transforms.RandomVerticalFlip(),
                                         transforms.RandomHorizontalFlip(),
                                         transforms.ToTensor(),
                                         transforms.Normalize(mean=[0.], std=[255.])])

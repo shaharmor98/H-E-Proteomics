@@ -46,7 +46,5 @@ class TilesDataset(Dataset):
             img_path = os.path.join(self.root_dir, self._files[index][0])
 
         img = Image.open(img_path)
-        print("Before transform")
         img = self.transform(img)
-        print("Worked!?")
         return img, self._files[index][1]
