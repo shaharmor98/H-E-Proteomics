@@ -19,4 +19,5 @@ class Configuration(object):
     OOD_FILE_PATH = os.path.join(CHECKPOINTS_PATH, "ood.txt")
     VAL_FILE_PATH = os.path.join(CHECKPOINTS_PATH, "val_{n_round}.txt")
     N_ROUNDS = 5
-    BATCH_SIZE = 32
+    BATCH_SIZE = 1024
+    # BATCH_SIZE = 32

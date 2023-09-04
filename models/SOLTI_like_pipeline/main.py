@@ -100,6 +100,7 @@ def train(args, gene):
         version = max(versions) + 1
 
     run_version = "{gene}--v_{version}".format(gene=gene, version=str(version))
+    print("Run version: " + run_version)
     wandb_logger = WandbLogger(project=project_name, log_model=True,
                                save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene),
                                version=run_version)
