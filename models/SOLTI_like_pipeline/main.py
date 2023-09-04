@@ -106,8 +106,6 @@ def train(args, gene):
     wandb_logger = WandbLogger(project=project_name, log_model=True,
                                save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene),
                                version=run_version)
-    callbacks = [EarlyStopping(monitor="val_epoch_loss", patience=30, mode="min"),
-                 ModelCheckpoint(monitor="val_epoch_loss", mode="min", save_top_k=1)]
     for n_round in range(Configuration.N_ROUNDS):
         print("Starting round: " + str(n_round))
         train_instances, valid_instances = data_splitter.split_train_val(extreme,
@@ -116,6 +114,9 @@ def train(args, gene):
         with open(Configuration.VAL_FILE_PATH.format(gene=gene, n_round=n_round), "w") as f:
             json.dump(valid_instances, f)
         model = ProteinQuantClassifier(device).to(device)
+        callbacks = [EarlyStopping(monitor="val_epoch_loss", patience=30, mode="min"),
+                     ModelCheckpoint(monitor="val_epoch_loss", mode="min", save_top_k=1,
+                                     filename="gene-" + gene + "-round-" + str(n_round))]
         trainer = pl.Trainer(max_epochs=10, devices="auto", accelerator="auto", val_check_interval=(1 / 16),
                              logger=wandb_logger, strategy="ddp",
                              # num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
@@ -123,15 +124,6 @@ def train(args, gene):
         # callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")])
         trainer.checkpoint_callback.filename = "gene-" + gene + "-round-" + str(n_round)
         train_dataset = TilesDataset(tiles_directory_path, transform_compose, train_instances, "Train-dataset")
-        num_gpus = torch.cuda.device_count()  # Get the number of available GPUs
-        # Calculate the effective batch size for DDP
-        effective_batch_size = Configuration.BATCH_SIZE * num_gpus
-        # Calculate the total number of samples in your training dataset
-        total_samples = len(train_dataset)
-        # Calculate the number of batches per epoch
-        batches_per_epoch = total_samples // effective_batch_size
-        print("Batches per epoch: " + str(batches_per_epoch))
-
         validation_dataset = TilesDataset(tiles_directory_path, transform_compose, valid_instances, "Val-dataset")
 
         train_loader = DataLoader(train_dataset, batch_size=Configuration.BATCH_SIZE, num_workers=num_workers,
