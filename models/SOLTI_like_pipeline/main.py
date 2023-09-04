@@ -117,7 +117,8 @@ def train(args, gene):
             json.dump(valid_instances, f)
         model = ProteinQuantClassifier(device).to(device)
         trainer = pl.Trainer(max_epochs=10, devices="auto", accelerator="auto", val_check_interval=(1 / 16),
-                             num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
+                             logger=wandb_logger, strategy="ddp",
+                             # num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
                              callbacks=callbacks)
         # callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")])
         trainer.checkpoint_callback.filename = "gene-" + gene + "-round-" + str(n_round)
@@ -130,7 +131,7 @@ def train(args, gene):
         # Calculate the number of batches per epoch
         batches_per_epoch = total_samples // effective_batch_size
         print("Batches per epoch: " + str(batches_per_epoch))
-        
+
         validation_dataset = TilesDataset(tiles_directory_path, transform_compose, valid_instances, "Val-dataset")
 
         train_loader = DataLoader(train_dataset, batch_size=Configuration.BATCH_SIZE, num_workers=num_workers,
