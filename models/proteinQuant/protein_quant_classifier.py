@@ -17,6 +17,7 @@ class ProteinQuantClassifier(pl.LightningModule):
         self.loss = nn.BCELoss()
         self.accuracy = torchmetrics.classification.BinaryAccuracy()
         self._device = device
+        self.validation_step_outputs = []
         self.save_hyperparameters()
 
     def forward(self, x):
@@ -55,6 +56,7 @@ class ProteinQuantClassifier(pl.LightningModule):
 
         # self.log('val_loss', val_loss, prog_bar=True, sync_dist=True, on_step=True, on_epoch=True)
         # self.log('val_acc', accuracy, prog_bar=True, sync_dist=True)
+        self.validation_step_outputs.append(val_loss)
         return val_loss
         # return {"val_loss": val_loss, "acc": accuracy}
 
