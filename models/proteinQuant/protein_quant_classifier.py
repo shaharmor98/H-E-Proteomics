@@ -43,7 +43,7 @@ class ProteinQuantClassifier(pl.LightningModule):
         self.log('train_acc', accuracy, prog_bar=True, sync_dist=True)
         return {'loss': loss, 'acc': accuracy}
 
-    def validation_step(self, batch, batch_idx):
+    """def validation_step(self, batch, batch_idx):
         # this is the validation loop
         x, original_labels = batch
         original_labels = original_labels.reshape(-1, 1).float()
@@ -63,6 +63,7 @@ class ProteinQuantClassifier(pl.LightningModule):
             losses.append(output["val_loss"].cpu())
 
         self.log("val_epoch_loss", np.asarray(losses).mean(), sync_dist=True)
+    """
 
     def test_step(self, batch, batch_idx):
         # this is the test loop

@@ -104,8 +104,8 @@ def train(args, gene):
     wandb_logger = WandbLogger(project=project_name, log_model=True,
                                save_dir=Configuration.CHECKPOINTS_PATH.format(gene=gene),
                                version=run_version)
-    callbacks = [EarlyStopping(monitor="val_loss", patience=30, mode="min"),
-                 ModelCheckpoint(monitor="val_loss", mode="min", save_top_k=1)]
+    # callbacks = [EarlyStopping(monitor="val_loss", patience=30, mode="min"),
+    #              ModelCheckpoint(monitor="val_loss", mode="min", save_top_k=1)]
     for n_round in range(Configuration.N_ROUNDS):
         print("Starting round: " + str(n_round))
         train_instances, valid_instances = data_splitter.split_train_val(extreme,
@@ -115,8 +115,8 @@ def train(args, gene):
             json.dump(valid_instances, f)
         model = ProteinQuantClassifier(device).to(device)
         trainer = pl.Trainer(max_epochs=10, devices="auto", accelerator="auto", val_check_interval=(1 / 16),
-                             num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",
-                             callbacks=callbacks)
+                             num_sanity_val_steps=0, logger=wandb_logger, strategy="ddp",)
+                             # callbacks=callbacks)
         # callbacks=[EarlyStopping(monitor="val_epoch_loss", patience=5, mode="min")])
         trainer.checkpoint_callback.filename = "gene-" + gene + "-round-" + str(n_round)
         train_dataset = TilesDataset(tiles_directory_path, transform_compose, train_instances, "Train-dataset")
@@ -156,7 +156,8 @@ def run_on_ood(ids, tiles_directory, gene, run_version, project_name, target_fil
                 results[test_id] = []
             print("Starting test_id: ", test_id)
             dataset = TilesDataset(tiles_directory, transform_compose, [[test_id, -1]], caller="Prediction dataset")
-            trainer = pl.Trainer(devices=1, accelerator="auto")
+            trainer = pl.Trainer(devices=1, accelerator="auto", inference_mode=True)
+            # trainer = pl.Trainer(devices=1, accelerator="auto")
             predictions = trainer.predict(model,
                                           dataloaders=DataLoader(dataset, num_workers=int(multiprocessing.cpu_count())))
             predictions = [p.item() for p in predictions]
