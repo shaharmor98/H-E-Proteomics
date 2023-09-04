@@ -43,7 +43,7 @@ class ProteinQuantClassifier(pl.LightningModule):
         self.log('train_acc', accuracy, prog_bar=True, sync_dist=True)
         return {'loss': loss, 'acc': accuracy}
 
-    """def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch, batch_idx):
         # this is the validation loop
         x, original_labels = batch
         original_labels = original_labels.reshape(-1, 1).float()
@@ -51,19 +51,24 @@ class ProteinQuantClassifier(pl.LightningModule):
             return
         y_hat = self(x)
         val_loss = self.loss(y_hat.float(), original_labels)
-        accuracy = self.accuracy(y_hat, original_labels)
+        # accuracy = self.accuracy(y_hat, original_labels)
 
-        self.log('val_loss', val_loss, prog_bar=True, sync_dist=True, on_step=True, on_epoch=True)
-        self.log('val_acc', accuracy, prog_bar=True, sync_dist=True)
-        return {"val_loss": val_loss, "acc": accuracy}
+        # self.log('val_loss', val_loss, prog_bar=True, sync_dist=True, on_step=True, on_epoch=True)
+        # self.log('val_acc', accuracy, prog_bar=True, sync_dist=True)
+        return val_loss
+        # return {"val_loss": val_loss, "acc": accuracy}
 
-    def validation_epoch_end(self, outputs):
-        losses = []
-        for output in outputs:
-            losses.append(output["val_loss"].cpu())
+    def on_validation_epoch_end(self):
+        losses = torch.stack(self.validation_step_outputs)
+        self.log("val_epoch_loss", losses.mean(), sync_dist=True)
+        self.validation_step_outputs.clear()  # free memory
 
-        self.log("val_epoch_loss", np.asarray(losses).mean(), sync_dist=True)
-    """
+    # def validation_epoch_end(self, outputs):
+    #     losses = []
+    #     for output in outputs:
+    #         losses.append(output["val_loss"].cpu())
+    #
+    #     self.log("val_epoch_loss", np.asarray(losses).mean(), sync_dist=True)
 
     def test_step(self, batch, batch_idx):
         # this is the test loop
@@ -80,4 +85,4 @@ class ProteinQuantClassifier(pl.LightningModule):
         optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10, verbose=True)
 
-        return {"optimizer": optimizer, "lr_scheduler": scheduler, "monitor": "val_loss"}
+        return {"optimizer": optimizer, "lr_scheduler": scheduler, "monitor": "val_epoch_loss"}
